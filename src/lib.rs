@@ -4,7 +4,6 @@ pub mod i1;
 pub mod i2;
 pub mod i3;
 pub mod i4;
-pub mod i5;
 
 #[cfg(test)]
 mod tests {
@@ -12,10 +11,9 @@ mod tests {
 
     const IMPLEMENTACIONES: &[(&str, fn(&[f64]) -> f64)] = &[
         ("i1_secuencial", i1::desviacion_estandar),
-        ("i2_paralelo", i2::desviacion_estandar),
-        ("i3_paralelo_min_len", i3::desviacion_estandar),
-        ("i4_paralelo_simd", i4::desviacion_estandar),
-        ("i5_paralelo_simd_unsafe", i5::desviacion_estandar),
+        ("i2_secuencial_single_pass", i2::desviacion_estandar),
+        ("i3_simd_single_pass", i3::desviacion_estandar),
+        ("i4_simd_single_pass_par", i4::desviacion_estandar),
     ];
 
     #[test]
