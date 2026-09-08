@@ -9,7 +9,7 @@ fn configure_criterion() -> Criterion {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let datos = (0..1_000_000)
+    let datos = (0..1_000_000_000)
         .map(|_| rand::random::<f64>())
         .collect::<Vec<f64>>();
     c.bench_function("i1", |b| {
