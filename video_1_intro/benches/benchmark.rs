@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::{hint::black_box, time::Duration};
-use ultra_paralelismo::{i1, i2, i3, i4};
+use ultra_paralelismo::{i1, i2, i3, i4, i5};
 
 fn configure_criterion() -> Criterion {
     Criterion::default()
@@ -23,6 +23,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("i4", |b| {
         b.iter(|| i4::desviacion_estandar(black_box(&datos)))
+    });
+    c.bench_function("i5", |b| {
+        b.iter(|| i5::desviacion_estandar(black_box(&datos)))
     });
 }
 

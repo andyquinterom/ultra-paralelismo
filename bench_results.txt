@@ -1,0 +1,31 @@
+
+running 7 tests
+test tests::test_consistencia_entre_implementaciones ... ignored
+test tests::test_desviacion_estandar_datos_basicos ... ignored
+test tests::test_desviacion_estandar_dos_elementos ... ignored
+test tests::test_desviacion_estandar_un_elemento ... ignored
+test tests::test_desviacion_estandar_valores_iguales ... ignored
+test tests::test_desviacion_estandar_valores_mixtos ... ignored
+test tests::test_desviacion_estandar_valores_negativos ... ignored
+
+test result: ok. 0 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+i1                      time:   [1.0767 s 1.0803 s 1.0832 s]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+
+i2                      time:   [567.22 ms 569.30 ms 571.23 ms]
+
+i3                      time:   [105.02 ms 105.37 ms 105.93 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+i4                      time:   [32.317 ms 32.388 ms 32.516 ms]
+
+i5                      time:   [66.786 ms 67.180 ms 67.556 ms]
+
+numpy-ds.py (N = 1,000,000,000, float64)
+Generacion: 3.218 s
+Desviacion estandar: 0.288679
+Calculo de la desviacion estandar: 4.189 s
+

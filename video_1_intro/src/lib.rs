@@ -4,6 +4,7 @@ pub mod i1;
 pub mod i2;
 pub mod i3;
 pub mod i4;
+pub mod i5;
 
 #[cfg(test)]
 mod tests {
@@ -14,6 +15,7 @@ mod tests {
         ("i2_secuencial_single_pass", i2::desviacion_estandar),
         ("i3_simd_single_pass", i3::desviacion_estandar),
         ("i4_simd_single_pass_par", i4::desviacion_estandar),
+        ("i5_simd_double_pass_par", i5::desviacion_estandar),
     ];
 
     #[test]

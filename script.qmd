@@ -1,0 +1,127 @@
+# Curso SIMD introductorio
+
+## Objetivo: Al finalizar este curso el estudiante podra diseñar algoritmos
+utilizando SIMD. El estudiante podra traducir codigo escalar a codigo
+de vectores, pensando en como re-estructurar los datos para trabajar
+con SIMD.
+
+Nota: Todos estos videos van a ser en formato light board, donde se dibuja
+y escribe sobre una pizarra.
+
+## Video 1: Estas dejando mucho rendimiento sobre la mesa (Introduccion a SIMD)
+
+### Resumen
+
+En este video se explora como estamos dejando mucho rendimiento sobre la mesa
+todos los dias cuando escribimos codigo. Exploramos el caso de calcular la desviacion
+estandar como una introduccion, donde mostramos que el calculo esta esta muy lejos del
+limite teorico en librerias populares como Numpy. Nos entramos en entender por que esto
+ocurre y como podemos optimizar el rendimiento de estos calculos.
+
+### Temas a tocar
+
+1. Repaso de como calcular el mejor rendimiento teorico
+
+Ver la formula de la desviacion estandar. Evaluar el codigo escalar "double pass" (i1.rs).
+Calcular el maximo rendimiento teorico con base en la memoria (ancho de banda).
+Hacer las transformaciones para obtener una version "single pass" (i2.rs) y volver a calcular
+el maximo teorico.
+Mencionar el problema de "catastrophic cancellation" que surge con la formula directa
+de single pass (perdida de precision numerica cuando la varianza es pequena frente a la media)
+y aclarar por que la usamos con fines didacticos para optimizar pases de memoria.
+
+2. Primer vistazo al codigo SIMD (la caja negra)
+
+Mostrar la implementacion SIMD (i3.rs) sin profundizar todavia:
+"Puede parecer un poco confuso, pero despues de revisar los conceptos de SIMD
+deberias poder disecar y entender el codigo pieza por pieza..."
+Hacer un breve "hint" sobre la forma de los datos (AoS vs SoA): notar que esto asume
+floats contiguos en memoria, dejando el analisis profundo de estructuras de datos para el Video 2.
+
+3. Que es un vector cuando hablamos de SIMD
+
+Entender que es un vector en terminos de hardware: registros escalares (64 bits) vs registros
+SIMD (128/256/512 bits) y el concepto de lanes.
+
+4. Operaciones SIMD
+
+Entender como se aplican operaciones aritmeticas elemento a elemento (+, *) en paralelo.
+Comparar con las versiones escalares.
+Inicializacion y splat.
+Reduccion horizontal (reduce_sum): como colapsar un vector de varios lanes a un unico valor escalar.
+
+5. Chunks de vectores SIMD y el residuo
+
+Como leemos datos de memoria de manera compatible con SIMD (as_chunks::<LANES>).
+Como manejar los elementos sobrantes que no llenan un vector completo (el residuo escalar).
+
+6. Re-revision del codigo SIMD
+
+Con los conceptos claros, disecar linea por linea el codigo SIMD (i3.rs), mapeando cada instruccion
+a los diagramas vistos.
+
+7. Paralelismo dentro de un ciclo vs multihilo
+
+Diferenciar conceptualmente el paralelismo a nivel de instruccion/datos (SIMD, dentro del ciclo de CPU)
+del paralelismo a nivel de nucleo (multithreading / Rayon).
+Presentar la implementacion multihilo con SIMD (i4.rs) para saturar el ancho de banda y alcanzar
+el limite teorico.
+
+### Notas
+
+#### Calculo del maximo teorico (double pass)
+
+Vamos a simular mil millones de valores de tipo double precision (64bits). Esto es equivalente
+a unos 8GB de datos. Mi MacBook Pro M4 Pro tiene 273 GB/s de bandaancha de memoria; 
+asumiendo que podemos optimizar el codigo de tal manera que la CPU no es un cuello de botella
+podemos calcular un limite teorico de (2 * 8 / 273) segundos (58.6 ms). Multiplicamos por 2
+por que hacemos dos corridas sobre los datos. Lo que significa que tenemos que leer las 8 GB
+dos veces.
+
+Para poder contrastar esta cota con el benchmark, i5.rs implementa el double pass con SIMD
+y paralelismo multihilo (rayon). El benchmark lo mide en 67.2 ms, esto es ~87% del ancho de
+banda pico (16 GB / 67.2 ms = 238 GB/s), lo que confirma que el limite teorico es alcanzable
+en la practica. Notar ademas que 67.2 ms es casi exactamente el doble de los 32.4 ms de i4
+(single pass), como predice el modelo.
+
+#### Calculo del maximo teorico (single pass)
+
+En teoria este es la mitad del double pass, por que solo iteramos sobre los datos
+una vez. Entonces seria 29.3 ms.
+
+La implementacion i4.rs (SIMD + rayon) mide 32.4 ms, ~90% del ancho de banda pico
+(8 GB / 32.4 ms = 247 GB/s). Es decir, tanto el limite de single pass como el de
+double pass se cumplen con un margen del orden del 10-13%.
+
+### Script
+
+Hola todos, hoy en dia tenemos computadores muy potentes que pueden
+correr calculos numericos sobre miles de millones de datos en pocos
+segundos. Que pensarias si te dijera que en realidad estas subutilizando
+tu computador. Seas una persona trabajando localmente en su laptop
+o una empresa que inverte cientos de miles o millones de dolares cada
+mes en infraestructura en la nube, existe un muy alta probabilidad
+que no estes utilizando el hardware por el que pagas a su maximo potencial.
+Y no estos hablando de que podrias estarle sacando 10% mas a tu CPU,
+hablo de ordenes de magnitud, 10 veces, 50 veces, 100 veces mejor
+rendimiento.
+
+Para cuando termine este video vas a aprender de lo que es capaz una
+CPU moderna y como escribir algoritmos que la utilicen a su maximo
+potencial.
+
+La desviacion estandar es una medida utilizada en la estadistica
+para saber que tan disperso es un conjunto de observaciones. No vamos
+a entrar en mucho detalle del lado estadistico. Si utilizamos NumPy,
+seguramente la libreria mas popular para computacion numerica en el
+ecosistema de Python, para calcular la desviacion estandar de mil millones
+de obervaciones vemos que se demora mas o menos unos 4.19 segundos.
+
+Esto es lento? Esto es rapido? No se, veamos como se calcula la
+desviacion estandar e intentemos calcular un maximo teorico.
+
+La formula de la desviacion estandar es la siguiente:
+
+$sigma = sqrt(1 / (N - 1) sum_(i=1)^N (x_i - x_bar)^2)$
+
+## Video 2: Estructuras de datos para SIMD: AoS vs SoA
