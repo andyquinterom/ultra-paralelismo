@@ -6,10 +6,7 @@ pub fn desviacion_estandar(data: &[f64]) -> f64 {
     let media = suma / n;
 
     data.iter()
-        .map(|value| {
-            let diff = value - media;
-            diff * diff
-        })
+        .map(|value| (value - media).powf(2.0))
         .sum::<f64>()
         .div(n)
         .sqrt()

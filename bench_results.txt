@@ -1,4 +1,3 @@
-
 running 7 tests
 test tests::test_consistencia_entre_implementaciones ... ignored
 test tests::test_desviacion_estandar_datos_basicos ... ignored
@@ -10,22 +9,40 @@ test tests::test_desviacion_estandar_valores_negativos ... ignored
 
 test result: ok. 0 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-i1                      time:   [1.0767 s 1.0803 s 1.0832 s]
-Found 1 outliers among 10 measurements (10.00%)
-  1 (10.00%) low mild
+secuencial              time:   [1.0485 s 1.0517 s 1.0550 s]
+                        change: [−3.0739% −2.7584% −2.4084%] (p = 0.00 < 0.05)
+                        Performance has improved.
 
-i2                      time:   [567.22 ms 569.30 ms 571.23 ms]
+secuencial_single_pass  time:   [556.31 ms 558.30 ms 560.23 ms]
+                        change: [−2.1927% −1.8651% −1.5013%] (p = 0.00 < 0.05)
+                        Performance has improved.
 
-i3                      time:   [105.02 ms 105.37 ms 105.93 ms]
+simd_single_pass        time:   [108.12 ms 110.08 ms 111.21 ms]
+                        change: [+1.6472% +2.7427% +3.9794%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+simd_single_pass_par    time:   [33.268 ms 33.588 ms 33.939 ms]
+                        change: [−3.9757% −0.1995% +3.1236%] (p = 0.92 > 0.05)
+                        No change in performance detected.
 Found 1 outliers among 10 measurements (10.00%)
   1 (10.00%) high severe
 
-i4                      time:   [32.317 ms 32.388 ms 32.516 ms]
+simd_double_pass_2      time:   [635.97 ms 637.25 ms 638.65 ms]
 
-i5                      time:   [66.786 ms 67.180 ms 67.556 ms]
+simd_double_pass_4      time:   [332.11 ms 332.63 ms 333.25 ms]
+
+simd_double_pass_8      time:   [207.18 ms 208.11 ms 208.88 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+simd_double_pass_8_par  time:   [66.483 ms 67.023 ms 67.476 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
 
 numpy-ds.py (N = 1,000,000,000, float64)
-Generacion: 3.218 s
 Desviacion estandar: 0.288679
-Calculo de la desviacion estandar: 4.189 s
+Calculo de la desviacion estandar: 0.953 s
 
+r-sd.R (N = 1,000,000,000, double)
+Desviacion estandar: 0.288675
+Calculo de la desviacion estandar: 1.869 s

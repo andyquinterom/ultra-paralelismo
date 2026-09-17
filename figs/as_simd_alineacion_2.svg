@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="1000" height="650"
+     font-family="'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" fill="#a8680a"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="650" fill="#ffffff"/>
+
+  <text x="60" y="50" font-size="27" font-weight="700" fill="#1a1a1a">as_simd::&lt;2&gt;() y la alineación de memoria</text>
+  <text x="60" y="80" font-size="15" fill="#555">data: &amp;[f64] — cada f64 = 8 bytes · Simd&lt;f64, 2&gt; = 16 bytes y exige una dirección múltiplo de 16</text>
+
+  <!-- dimensión 16 bytes -->
+  <line x1="184" y1="150" x2="312" y2="150" stroke="#888" stroke-width="1.5"/>
+  <line x1="184" y1="144" x2="184" y2="156" stroke="#888" stroke-width="1.5"/>
+  <line x1="312" y1="144" x2="312" y2="156" stroke="#888" stroke-width="1.5"/>
+  <text x="248" y="139" text-anchor="middle" font-size="13" fill="#666">16 bytes = 2 × f64</text>
+
+  <!-- direcciones -->
+  <text x="116" y="176" text-anchor="end" font-size="13" fill="#333">base 0x…08</text>
+  <text x="184" y="176" text-anchor="middle" font-size="13" fill="#1c4fa1">0x…10</text>
+  <text x="312" y="176" text-anchor="middle" font-size="13" fill="#1c4fa1">0x…20</text>
+  <text x="440" y="176" text-anchor="middle" font-size="13" fill="#1c4fa1">0x…30</text>
+  <text x="568" y="176" text-anchor="middle" font-size="13" fill="#1c4fa1">0x…40</text>
+  <text x="696" y="176" text-anchor="middle" font-size="13" fill="#1c4fa1">0x…50</text>
+
+  <!-- regla -->
+  <line x1="120" y1="188" x2="888" y2="188" stroke="#bbbbbb" stroke-width="1.5"/>
+
+  <!-- fronteras de alineación -->
+  <line x1="184" y1="188" x2="184" y2="300" stroke="#2f6fdb" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <line x1="312" y1="188" x2="312" y2="300" stroke="#2f6fdb" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <line x1="440" y1="188" x2="440" y2="300" stroke="#2f6fdb" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <line x1="568" y1="188" x2="568" y2="300" stroke="#2f6fdb" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <line x1="696" y1="188" x2="696" y2="300" stroke="#2f6fdb" stroke-width="1.5" stroke-dasharray="6 5"/>
+
+  <!-- anotación del prefijo -->
+  <text x="152" y="218" text-anchor="middle" font-size="13" fill="#a8680a">faltan 8 B (1 × f64)</text>
+  <line x1="124" y1="228" x2="180" y2="228" stroke="#a8680a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+  <!-- banda del cuerpo alineado -->
+  <rect x="184" y="240" width="512" height="60" fill="#eef4fe"/>
+
+  <!-- celdas de memoria -->
+  <g stroke-width="1.5">
+    <rect x="122" y="240" width="60" height="60" rx="4" fill="#fdecc8" stroke="#d99a2b"/>
+    <rect x="186" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="250" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="314" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="378" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="442" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="506" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="570" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="634" y="240" width="60" height="60" rx="4" fill="#dbe8fb" stroke="#2f6fdb"/>
+    <rect x="698" y="240" width="60" height="60" rx="4" fill="#fdecc8" stroke="#d99a2b"/>
+    <rect x="762" y="240" width="60" height="60" rx="4" fill="#fdecc8" stroke="#d99a2b"/>
+    <rect x="826" y="240" width="60" height="60" rx="4" fill="#fdecc8" stroke="#d99a2b"/>
+  </g>
+
+  <!-- índices -->
+  <g font-size="18" fill="#333" text-anchor="middle">
+    <text x="152" y="278">0</text>
+    <text x="216" y="278">1</text>
+    <text x="280" y="278">2</text>
+    <text x="344" y="278">3</text>
+    <text x="408" y="278">4</text>
+    <text x="472" y="278">5</text>
+    <text x="536" y="278">6</text>
+    <text x="600" y="278">7</text>
+    <text x="664" y="278">8</text>
+    <text x="728" y="278">9</text>
+    <text x="792" y="278">10</text>
+    <text x="856" y="278">11</text>
+  </g>
+
+  <!-- corchetes de agrupación -->
+  <g stroke-width="1.5" fill="none">
+    <line x1="120" y1="318" x2="184" y2="318" stroke="#d99a2b"/>
+    <line x1="120" y1="318" x2="120" y2="326" stroke="#d99a2b"/>
+    <line x1="184" y1="318" x2="184" y2="326" stroke="#d99a2b"/>
+
+    <line x1="184" y1="318" x2="312" y2="318" stroke="#2f6fdb"/>
+    <line x1="184" y1="318" x2="184" y2="326" stroke="#2f6fdb"/>
+    <line x1="312" y1="318" x2="312" y2="326" stroke="#2f6fdb"/>
+
+    <line x1="312" y1="318" x2="440" y2="318" stroke="#2f6fdb"/>
+    <line x1="312" y1="318" x2="312" y2="326" stroke="#2f6fdb"/>
+    <line x1="440" y1="318" x2="440" y2="326" stroke="#2f6fdb"/>
+
+    <line x1="440" y1="318" x2="568" y2="318" stroke="#2f6fdb"/>
+    <line x1="440" y1="318" x2="440" y2="326" stroke="#2f6fdb"/>
+    <line x1="568" y1="318" x2="568" y2="326" stroke="#2f6fdb"/>
+
+    <line x1="568" y1="318" x2="696" y2="318" stroke="#2f6fdb"/>
+    <line x1="568" y1="318" x2="568" y2="326" stroke="#2f6fdb"/>
+    <line x1="696" y1="318" x2="696" y2="326" stroke="#2f6fdb"/>
+
+    <line x1="696" y1="318" x2="888" y2="318" stroke="#d99a2b"/>
+    <line x1="696" y1="318" x2="696" y2="326" stroke="#d99a2b"/>
+    <line x1="888" y1="318" x2="888" y2="326" stroke="#d99a2b"/>
+  </g>
+  <g font-size="13" text-anchor="middle">
+    <text x="152" y="344" fill="#a8680a">prefijo · 1 f64</text>
+    <text x="248" y="344" fill="#1c4fa1">Simd&lt;f64,2&gt;</text>
+    <text x="376" y="344" fill="#1c4fa1">Simd&lt;f64,2&gt;</text>
+    <text x="504" y="344" fill="#1c4fa1">Simd&lt;f64,2&gt;</text>
+    <text x="632" y="344" fill="#1c4fa1">Simd&lt;f64,2&gt;</text>
+    <text x="792" y="344" fill="#a8680a">sufijo · 3 f64</text>
+  </g>
+
+  <!-- leyenda -->
+  <rect x="60"  y="378" width="20" height="14" rx="2" fill="#fdecc8" stroke="#d99a2b"/>
+  <text x="88"  y="390" font-size="13" fill="#333">escalar (prefijo / sufijo)</text>
+  <rect x="320" y="378" width="20" height="14" rx="2" fill="#dbe8fb" stroke="#2f6fdb"/>
+  <text x="348" y="390" font-size="13" fill="#333">cuerpo alineado · Simd&lt;f64, 2&gt;</text>
+  <line x1="640" y1="385" x2="662" y2="385" stroke="#2f6fdb" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="672" y="390" font-size="13" fill="#333">frontera de alineación (múltiplo de 16 B)</text>
+
+  <!-- panel de código -->
+  <rect x="60" y="416" width="880" height="150" rx="6" fill="#f7f7f9" stroke="#dddddd"/>
+  <g font-family="'SF Mono', Menlo, Consolas, monospace" font-size="14">
+    <text x="82" y="450" fill="#1a1a1a">let (</text>
+    <text x="120" y="450" fill="#a8680a">prefijo</text>
+    <text x="178" y="450" fill="#1a1a1a">, </text>
+    <text x="192" y="450" fill="#1c4fa1">vectores</text>
+    <text x="264" y="450" fill="#1a1a1a">, </text>
+    <text x="278" y="450" fill="#a8680a">sufijo</text>
+    <text x="334" y="450" fill="#1a1a1a">) = data.as_simd::&lt;2&gt;();</text>
+    <text x="82" y="482" fill="#777">// prefijo: escalar · vectores: &amp;[Simd&lt;f64,2&gt;] · sufijo: escalar</text>
+  </g>
+  <g font-family="'SF Mono', Menlo, Consolas, monospace" font-size="14" fill="#1a1a1a">
+    <text x="82" y="516">let mut suma_vec = Simd::splat(0.0);</text>
+    <text x="82" y="546">for &amp;vector in vectores { suma_vec += vector; }</text>
+  </g>
+
+  <text x="60" y="606" font-size="13" fill="#666">El tamaño del prefijo depende de la dirección base; el sufijo depende del largo de los datos.</text>
+</svg>

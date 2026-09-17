@@ -1,21 +1,27 @@
 #![feature(portable_simd)]
 
-pub mod i1;
-pub mod i2;
-pub mod i3;
-pub mod i4;
-pub mod i5;
+pub mod secuencial;
+pub mod secuencial_single_pass;
+pub mod simd_single_pass;
+pub mod simd_single_pass_par;
+pub mod simd_double_pass_2;
+pub mod simd_double_pass_4;
+pub mod simd_double_pass_8;
+pub mod simd_double_pass_8_par;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const IMPLEMENTACIONES: &[(&str, fn(&[f64]) -> f64)] = &[
-        ("i1_secuencial", i1::desviacion_estandar),
-        ("i2_secuencial_single_pass", i2::desviacion_estandar),
-        ("i3_simd_single_pass", i3::desviacion_estandar),
-        ("i4_simd_single_pass_par", i4::desviacion_estandar),
-        ("i5_simd_double_pass_par", i5::desviacion_estandar),
+        ("secuencial", secuencial::desviacion_estandar),
+        ("secuencial_single_pass", secuencial_single_pass::desviacion_estandar),
+        ("simd_single_pass", simd_single_pass::desviacion_estandar),
+        ("simd_single_pass_par", simd_single_pass_par::desviacion_estandar),
+        ("simd_double_pass_2", simd_double_pass_2::desviacion_estandar),
+        ("simd_double_pass_4", simd_double_pass_4::desviacion_estandar),
+        ("simd_double_pass_8", simd_double_pass_8::desviacion_estandar),
+        ("simd_double_pass_8_par", simd_double_pass_8_par::desviacion_estandar_8_par),
     ];
 
     #[test]

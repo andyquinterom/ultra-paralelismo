@@ -22,17 +22,12 @@ ocurre y como podemos optimizar el rendimiento de estos calculos.
 
 1. Repaso de como calcular el mejor rendimiento teorico
 
-Ver la formula de la desviacion estandar. Evaluar el codigo escalar "double pass" (i1.rs).
+Ver la formula de la desviacion estandar. Evaluar el codigo escalar (secuencial.rs).
 Calcular el maximo rendimiento teorico con base en la memoria (ancho de banda).
-Hacer las transformaciones para obtener una version "single pass" (i2.rs) y volver a calcular
-el maximo teorico.
-Mencionar el problema de "catastrophic cancellation" que surge con la formula directa
-de single pass (perdida de precision numerica cuando la varianza es pequena frente a la media)
-y aclarar por que la usamos con fines didacticos para optimizar pases de memoria.
 
 2. Primer vistazo al codigo SIMD (la caja negra)
 
-Mostrar la implementacion SIMD (i3.rs) sin profundizar todavia:
+Mostrar la implementacion SIMD (simd_double_pass.rs) sin profundizar todavia:
 "Puede parecer un poco confuso, pero despues de revisar los conceptos de SIMD
 deberias poder disecar y entender el codigo pieza por pieza..."
 Hacer un breve "hint" sobre la forma de los datos (AoS vs SoA): notar que esto asume
@@ -46,30 +41,30 @@ SIMD (128/256/512 bits) y el concepto de lanes.
 4. Operaciones SIMD
 
 Entender como se aplican operaciones aritmeticas elemento a elemento (+, *) en paralelo.
-Comparar con las versiones escalares.
+Comparar con la version escalar.
 Inicializacion y splat.
 Reduccion horizontal (reduce_sum): como colapsar un vector de varios lanes a un unico valor escalar.
 
-5. Chunks de vectores SIMD y el residuo
+5. Vectores SIMD y el residuo
 
-Como leemos datos de memoria de manera compatible con SIMD (as_chunks::<LANES>).
-Como manejar los elementos sobrantes que no llenan un vector completo (el residuo escalar).
+Como leemos datos de memoria de manera compatible con SIMD (as_simd::<LANES>).
+Como manejar los elementos sobrantes que no llenan un vector completo (el prefijo y el sufijo escalar).
 
 6. Re-revision del codigo SIMD
 
-Con los conceptos claros, disecar linea por linea el codigo SIMD (i3.rs), mapeando cada instruccion
+Con los conceptos claros, disecar linea por linea el codigo SIMD (simd_double_pass_8.rs), mapeando cada instruccion
 a los diagramas vistos.
 
 7. Paralelismo dentro de un ciclo vs multihilo
 
 Diferenciar conceptualmente el paralelismo a nivel de instruccion/datos (SIMD, dentro del ciclo de CPU)
 del paralelismo a nivel de nucleo (multithreading / Rayon).
-Presentar la implementacion multihilo con SIMD (i4.rs) para saturar el ancho de banda y alcanzar
+Presentar la implementacion multihilo con SIMD (simd_double_pass_par.rs) para saturar el ancho de banda y alcanzar
 el limite teorico.
 
 ### Notas
 
-#### Calculo del maximo teorico (double pass)
+#### Calculo del maximo teorico
 
 Vamos a simular mil millones de valores de tipo double precision (64bits). Esto es equivalente
 a unos 8GB de datos. Mi MacBook Pro M4 Pro tiene 273 GB/s de bandaancha de memoria; 
@@ -78,20 +73,10 @@ podemos calcular un limite teorico de (2 * 8 / 273) segundos (58.6 ms). Multipli
 por que hacemos dos corridas sobre los datos. Lo que significa que tenemos que leer las 8 GB
 dos veces.
 
-Para poder contrastar esta cota con el benchmark, i5.rs implementa el double pass con SIMD
-y paralelismo multihilo (rayon). El benchmark lo mide en 67.2 ms, esto es ~87% del ancho de
-banda pico (16 GB / 67.2 ms = 238 GB/s), lo que confirma que el limite teorico es alcanzable
-en la practica. Notar ademas que 67.2 ms es casi exactamente el doble de los 32.4 ms de i4
-(single pass), como predice el modelo.
-
-#### Calculo del maximo teorico (single pass)
-
-En teoria este es la mitad del double pass, por que solo iteramos sobre los datos
-una vez. Entonces seria 29.3 ms.
-
-La implementacion i4.rs (SIMD + rayon) mide 32.4 ms, ~90% del ancho de banda pico
-(8 GB / 32.4 ms = 247 GB/s). Es decir, tanto el limite de single pass como el de
-double pass se cumplen con un margen del orden del 10-13%.
+Para poder contrastar esta cota con el benchmark, simd_double_pass_par.rs implementa el doble
+paso con SIMD y paralelismo multihilo (rayon). El benchmark lo mide en 67.2 ms, esto es ~87%
+del ancho de banda pico (16 GB / 67.2 ms = 238 GB/s), lo que confirma que el limite teorico es
+alcanzable en la practica.
 
 ### Script
 
@@ -115,13 +100,139 @@ para saber que tan disperso es un conjunto de observaciones. No vamos
 a entrar en mucho detalle del lado estadistico. Si utilizamos NumPy,
 seguramente la libreria mas popular para computacion numerica en el
 ecosistema de Python, para calcular la desviacion estandar de mil millones
-de obervaciones vemos que se demora mas o menos unos 4.19 segundos.
+de obervaciones vemos que se demora mas o menos unos 0.957 segundos en mi MacBook M4 Pro.
 
 Esto es lento? Esto es rapido? No se, veamos como se calcula la
 desviacion estandar e intentemos calcular un maximo teorico.
 
 La formula de la desviacion estandar es la siguiente:
 
-$sigma = sqrt(1 / (N - 1) sum_(i=1)^N (x_i - x_bar)^2)$
+$$
+\sigma = \sqrt{\frac{\sum_{i=1}^{N}(x_i - \mu)^2}{N}}
+$$
+
+donde $\mu$ es la media, definida como:
+
+$$
+\mu = \frac{1}{N}\sum_{i=1}^{N} x_i
+$$
+
+Esta formula implica dos sumas sobre el total de los datos. Hay una particularidad,
+la suma de la diferencia de cuadrados depende de la media. Por lo cual estas dos se tienen
+que correr por separado. Primero sumar el total para calcular la media, despues sumar
+las diferencias de cuadrados.
+
+En el ejemplo de NumPy teniamos mil millones de observaciones de tipo double. Un double
+tiene 8 bytes. Por lo cual nuestro conjuntos de datos son 8GB. 
+Si tenemos que iterar dos veces sobre los 8GB, estariamos leyendo 16GB de datos.
+
+Mi MacBook M4 Pro tiene una bandaancha de memoria de 273GB/s. La bandaancha de la memoria es
+velocidad en la que se puede leer datos de la memoria. En este caso, Apple afirma que deberiamos
+poder leer 273GB de datos cada segundo. Entonces si intentamos calcular cuanto nos tomaria leer
+16GB, esto tomaria mas o menos 58ms. Esto seria asumiendo que la CPU no es cuello de botella.
+
+La razon por la cual estoy asumiendo que la CPU no es cuello de botella es porque quiero ver
+que tanto nos podemos acercar a este numero. Si tuvieramos una CPU infinitamente rapida,
+nunca podriamos superar este numero.
+
+Entonces en nuestro absoluto mejor escenario deberia tomarse 58ms. 
+Esto es 16 veces mas rapido que la version de NumPy.
+
+Cuando mencione al principio que estabamos dejando mucho rendimiento sobre la mesa
+era verdad. Y aqui estamos hablando de un calculo relativamente descomplicado.
+En un calculo donde la complejidad de tiempo crece de forma cuadratica por ejemplo,
+el cambio puede ser muchisimo mayor.
+
+Si queremos optimizar este tipo de operaciones tenemos que utilizar un lenguaje
+que nos permita trabajar cercanamente con la CPU. Yo elijo Rust porque me
+parece un lenguaje que funciona y se lee muy bien para este tipo de trabajos.
+
+<!-- Muestra codigo en la pantalla -->
+
+Sin embargo, todo esto se puede llevar a C++ o lenguajes similares
+con relativa facilidad. Hago la nota que vamos a utilizar portable_SIMD
+que es una funcionalidad nightly, lo que significa que aun no esta
+estabilizada en la libreria estandar. Si correr nightly en tu proyecto
+no es posible se pueden utilizar funciones intrinsicas de la CPU
+o librerias como wide.
+
+Entonces empece escribiendo la version escalar y corri un benchmark.
+
+El resultado fue 1.0803 segundos. Es un poco mas lento que NumPy. Por que
+ocurre esto? No estoy muy seguro, me tocaria sentarme a revisar el codigo de
+numpy. Pero esta relativamente cerca, ahora mismo la implementacion de numpy es 13%
+mas rapida. Podemos decir que estas dos implementaciones son equivalentes.
+
+Que pasa si ahora convertimos esta funcion en codigo de vectores.
+
+<!-- Muestra codigo en la pantalla -->
+
+Ok... este codigo se ve mucho mas complicado. Pero vamos a ver que cuando
+entendamos bien lo que esta ocurriendo vamos a poder leerlo sin mayor problema.
+
+Concepto 1: Vectores SIMD
+
+Una de las palabras mas confusas en la ciencia de la computacion es la palabra
+vector. Vector puede significar muchisimas cosas, pero cuando hablamos de SIMD
+especificamente es:
+
+Un conjunto de datos continuos e independientes del mismo tipo que se puede almacenar en
+un registro de la CPU que permite procesar todos los valores en con una sola
+instruccion al mismo tiempo.
+
+SIMD significa Single-Instruccion-Multiple-Data. En espanol Una-Instruccion-Multiples-Datos.
+El vector simplemente es la unidad de multiples datos que se procesa en una sola instruccion.
+
+Esto significa que un vector de SIMD tiene un tamano definido y depende la CPU que
+lo corre.
+
+Mi CPU es un M4 Pro de Apple. Esta tiene la extension Neon. Un registro Neon tiene 128bits
+de longitud, por lo cual puede procesar hasta 2 doubles de 64 bits al mismo tiempo. Pero tambien
+podria procesar 4 floats de 32 bits al mismo tiempo, o 16 bytes al mismo tiempo, etc.
+
+En teoria entonces mi macbook deberia poder procesar hasta dos doubles al mismo tiempo.
+
+<!-- Muestra codigo en la pantalla -->
+
+De ahi viene el `LANES = 2`. Estamos teniendo en cuenta que nuestro codigo SIMD
+puede procesar hasta 2 doubles as mismo tiempo.
+
+Concepto 2: Alineamiento, Residuos, Vectores
+
+Cuando vamos a utilizar SIMD generalmente es porque vamos
+a procesar un conjunto grande de memoria continua. Esto puede
+ser un gran arreglo o slice, un string, etc. En memoria
+SIMD exige que la memoria tenga cierta alineacion. Que es la
+alineacion de memoria? 
+
+Como muchos de ustedes sabran, un arreglo es un espacio continuo en
+memoria. Pero para que un vector SIMD se pueda copiar eficientemente de
+memoria a un registro SIMD los datos deben vivir en un lugar que sea digamos
+"compatible" con el tamano del vector.
+
+<!-- Hago dibujo en pantalla mientras explico -->
+
+Por ejemplo un vector de 128bits (o 2 double) debe estar alineado con 16 bytes.
+Si el vector vive en memoria, no puede iniciar por ejemplo en el byte 8,
+debe estar en 0, 16, 32 o un multiplo de 16. Pero un arreglo tradicional
+puede iniciar en cualquier multiplo de 8 bytes.
+Tenemos dos opciones, 1. Re-alinear el la memoria con el vector cada vez que
+copiamos un valor a un registro. 2. Sacar un prefujo y solo tomar en cuenta
+vectores a partir del primer valor alineado.
+
+Despues esta el sufijo, que pasa si tenemos un arreglo de datos que no es un
+multiplo de tamano del vector. por ejemplo si vamos a utilizar vectores
+de tamano 2, y tenemos un arreglo de 3, vamos a tener un sufijo, a veces
+tambien llamado residuo de 1. No hay manera de que ese 1 entre en un vector simd
+de tamano 2.
+
+Tenemos entonces la funcion `as_simd`, esta nos crea 3 diferentes variables, 
+el prefijo que es un slice de escalares con lo que esta en el perfijo, los vectores
+que contienen los vectores SIMD, y el sufijo que contiene esos escalares que no pudimos
+organizar dentro de los vectores SIMD.
+
+
+
+
 
 ## Video 2: Estructuras de datos para SIMD: AoS vs SoA

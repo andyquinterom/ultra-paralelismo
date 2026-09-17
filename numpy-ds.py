@@ -11,8 +11,14 @@ x = rng.random(N, dtype=np.float64)
 t1 = time.perf_counter()
 print(f"Generacion: {t1 - t0:.3f} s")
 
-t2 = time.perf_counter()
-std = np.std(x)
-t3 = time.perf_counter()
-print(f"Desviacion estandar: {std:.6f}")
-print(f"Calculo de la desviacion estandar: {t3 - t2:.3f} s")
+times = []
+
+for i in range(0, 10):
+    t2 = time.perf_counter()
+    std = np.std(x)
+    t3 = time.perf_counter()
+    print(f"Iteracion {i}: {t3 - t2:.3f} s")
+    times.append(t3 - t2)
+
+times.sort()
+print(f"{times[5]:.3f}")
