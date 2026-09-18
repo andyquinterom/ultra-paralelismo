@@ -3,12 +3,11 @@ use std::simd::{Simd, num::SimdFloat};
 const LANES: usize = 4;
 
 pub fn desviacion_estandar(data: &[f64]) -> f64 {
-    const CERO: Simd<f64, LANES> = Simd::splat(0.0);
     let n = data.len() as f64;
 
     let (prefijo, vectores, sufijo) = data.as_simd::<LANES>();
 
-    let mut suma_vec = CERO;
+    let mut suma_vec = Simd::splat(0.0);
     for &vector in vectores {
         suma_vec += vector;
     }
@@ -21,7 +20,7 @@ pub fn desviacion_estandar(data: &[f64]) -> f64 {
     let media = suma / n;
 
     let media_vec = Simd::<f64, LANES>::splat(media);
-    let mut suma_cuadrados_vec = CERO;
+    let mut suma_cuadrados_vec = Simd::splat(0.0);
     for &vector in vectores {
         let diff = vector - media_vec;
         suma_cuadrados_vec += diff * diff;

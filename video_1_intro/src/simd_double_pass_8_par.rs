@@ -2,19 +2,17 @@ use rayon::prelude::*;
 use std::simd::{Simd, num::SimdFloat};
 
 const LANES: usize = 8;
-const BLOQUE: usize = 32 * 1024 / size_of::<f64>();
-
+const TAMAÑO_BLOQUE: usize = 32 * 1024 / size_of::<f64>();
 
 pub fn desviacion_estandar_8_par(data: &[f64]) -> f64 {
-    const CERO: Simd<f64, LANES> = Simd::splat(0.0);
     let n = data.len() as f64;
 
     let suma = data
-        .par_chunks(BLOQUE)
+        .par_chunks(TAMAÑO_BLOQUE)
         .map(|bloque| {
             let (prefijo, vectores, sufijo) = bloque.as_simd::<LANES>();
 
-            let mut suma_vec = CERO;
+            let mut suma_vec = Simd::splat(0.0);
             for &vector in vectores {
                 suma_vec += vector;
             }
@@ -32,11 +30,11 @@ pub fn desviacion_estandar_8_par(data: &[f64]) -> f64 {
 
     let media_vec = Simd::<f64, LANES>::splat(media);
     let suma_cuadrados = data
-        .par_chunks(BLOQUE)
+        .par_chunks(TAMAÑO_BLOQUE)
         .map(|bloque| {
             let (prefijo, vectores, sufijo) = bloque.as_simd::<LANES>();
 
-            let mut suma_cuadrados_vec = CERO;
+            let mut suma_cuadrados_vec = Simd::splat(0.0);
             for &vector in vectores {
                 let diff = vector - media_vec;
                 suma_cuadrados_vec += diff * diff;

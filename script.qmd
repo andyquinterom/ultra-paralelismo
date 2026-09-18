@@ -8,61 +8,13 @@ con SIMD.
 Nota: Todos estos videos van a ser en formato light board, donde se dibuja
 y escribe sobre una pizarra.
 
-## Video 1: Estas dejando mucho rendimiento sobre la mesa (Introduccion a SIMD)
+### Notas para mi
 
-### Resumen
+#### Formato
 
-En este video se explora como estamos dejando mucho rendimiento sobre la mesa
-todos los dias cuando escribimos codigo. Exploramos el caso de calcular la desviacion
-estandar como una introduccion, donde mostramos que el calculo esta esta muy lejos del
-limite teorico en librerias populares como Numpy. Nos entramos en entender por que esto
-ocurre y como podemos optimizar el rendimiento de estos calculos.
-
-### Temas a tocar
-
-1. Repaso de como calcular el mejor rendimiento teorico
-
-Ver la formula de la desviacion estandar. Evaluar el codigo escalar (secuencial.rs).
-Calcular el maximo rendimiento teorico con base en la memoria (ancho de banda).
-
-2. Primer vistazo al codigo SIMD (la caja negra)
-
-Mostrar la implementacion SIMD (simd_double_pass.rs) sin profundizar todavia:
-"Puede parecer un poco confuso, pero despues de revisar los conceptos de SIMD
-deberias poder disecar y entender el codigo pieza por pieza..."
-Hacer un breve "hint" sobre la forma de los datos (AoS vs SoA): notar que esto asume
-floats contiguos en memoria, dejando el analisis profundo de estructuras de datos para el Video 2.
-
-3. Que es un vector cuando hablamos de SIMD
-
-Entender que es un vector en terminos de hardware: registros escalares (64 bits) vs registros
-SIMD (128/256/512 bits) y el concepto de lanes.
-
-4. Operaciones SIMD
-
-Entender como se aplican operaciones aritmeticas elemento a elemento (+, *) en paralelo.
-Comparar con la version escalar.
-Inicializacion y splat.
-Reduccion horizontal (reduce_sum): como colapsar un vector de varios lanes a un unico valor escalar.
-
-5. Vectores SIMD y el residuo
-
-Como leemos datos de memoria de manera compatible con SIMD (as_simd::<LANES>).
-Como manejar los elementos sobrantes que no llenan un vector completo (el prefijo y el sufijo escalar).
-
-6. Re-revision del codigo SIMD
-
-Con los conceptos claros, disecar linea por linea el codigo SIMD (simd_double_pass_8.rs), mapeando cada instruccion
-a los diagramas vistos.
-
-7. Paralelismo dentro de un ciclo vs multihilo
-
-Diferenciar conceptualmente el paralelismo a nivel de instruccion/datos (SIMD, dentro del ciclo de CPU)
-del paralelismo a nivel de nucleo (multithreading / Rayon).
-Presentar la implementacion multihilo con SIMD (simd_double_pass_par.rs) para saturar el ancho de banda y alcanzar
-el limite teorico.
-
-### Notas
+Lo voy a grabar en formato lightboard. El codigo no lo voy a escribir
+en el lightboard. Se va a sobre poner en post produccion. Se pondra el
+codigo a un lado y seguire yo en la pantalla.
 
 #### Calculo del maximo teorico
 
@@ -167,6 +119,43 @@ Que pasa si ahora convertimos esta funcion en codigo de vectores.
 
 <!-- Muestra codigo en la pantalla -->
 
+```rust
+const LANES: usize = 2;
+
+pub fn desviacion_estandar(data: &[f64]) -> f64 {
+    let n = data.len() as f64;
+
+    let (prefijo, vectores, sufijo) = data.as_simd::<LANES>();
+
+    let mut suma_vec = Simd::splat(0.0);
+    for &vector in vectores {
+        suma_vec += vector;
+    }
+
+    let mut suma = suma_vec.reduce_sum();
+    for &valor in prefijo.iter().chain(sufijo) {
+        suma += valor;
+    }
+
+    let media = suma / n;
+
+    let media_vec = Simd::<f64, LANES>::splat(media);
+    let mut suma_cuadrados_vec = Simd::splat(0.0);
+    for &vector in vectores {
+        let diff = vector - media_vec;
+        suma_cuadrados_vec += diff * diff;
+    }
+
+    let mut suma_cuadrados = suma_cuadrados_vec.reduce_sum();
+    for &valor in prefijo.iter().chain(sufijo) {
+        let diff = valor - media;
+        suma_cuadrados += diff * diff;
+    }
+
+    (suma_cuadrados / n).sqrt()
+}
+```
+
 Ok... este codigo se ve mucho mas complicado. Pero vamos a ver que cuando
 entendamos bien lo que esta ocurriendo vamos a poder leerlo sin mayor problema.
 
@@ -191,8 +180,6 @@ de longitud, por lo cual puede procesar hasta 2 doubles de 64 bits al mismo tiem
 podria procesar 4 floats de 32 bits al mismo tiempo, o 16 bytes al mismo tiempo, etc.
 
 En teoria entonces mi macbook deberia poder procesar hasta dos doubles al mismo tiempo.
-
-<!-- Muestra codigo en la pantalla -->
 
 De ahi viene el `LANES = 2`. Estamos teniendo en cuenta que nuestro codigo SIMD
 puede procesar hasta 2 doubles as mismo tiempo.
@@ -223,16 +210,340 @@ vectores a partir del primer valor alineado.
 Despues esta el sufijo, que pasa si tenemos un arreglo de datos que no es un
 multiplo de tamano del vector. por ejemplo si vamos a utilizar vectores
 de tamano 2, y tenemos un arreglo de 3, vamos a tener un sufijo, a veces
-tambien llamado residuo de 1. No hay manera de que ese 1 entre en un vector simd
+tambien llamado residuo, de 1. No hay manera de que ese 1 entre en un vector simd
 de tamano 2.
 
 Tenemos entonces la funcion `as_simd`, esta nos crea 3 diferentes variables, 
 el prefijo que es un slice de escalares con lo que esta en el perfijo, los vectores
-que contienen los vectores SIMD, y el sufijo que contiene esos escalares que no pudimos
-organizar dentro de los vectores SIMD.
+que contienen los vectores SIMD, y el sufijo (o residuo) que contiene esos
+escalares que no pudimos organizar dentro de los vectores SIMD.
+
+Despues de esto tenemos que escribir los acumuladores. La funcion `splat`
+crea un nuevo vector con los valores inicializados a partir de un escalar.
+
+<!-- dibujo un vector de len 2 en el lightboard inicializado en 0 -->
+
+Con nuestro acumulador creado ahora vamos a interar por los vectores y vamos
+a acumularlos. Aqui vamos a estar iterando sobre nuestros datos y acumulando
+los de dos en dos. Lo que hace que este codigo sea mas rapido que el original
+es que la acumulacion toma una sola instruccion, entonces para lo que antes
+teniamos que hacer dos sumas, ahora podemos hacer dos.
+
+Una vez terminemos de acumular las sumas en nuestro vector lo podemos
+reducir. La funcion reduce_sum toma un vector y lo reduce a un escalar
+sumando los elementos.
+
+Hasta aqui donde vamos en el codigo. Ya tenemos la suma de los vectores.
+Como ya estamos trabajando otra vez con escalares, podemos iterar sobre
+el prefijo y el residuo, que deberian ser pocos valores y terminar de
+calcular la suma.
+
+Teniendo ya la suma, podemos calcular la media trivialmente diviendo
+por el numero de elementos.
+
+Ahora tenemos que calcular la suma de cuadrados. Esta parte consiste segun
+la formula de la desviacion, en sumar la diferencia entre cada valor y la
+media al cuadrado.
+
+Entonces que tenemos que hacer? Necesitamos un vector que tenga el valor
+de la media repetido.
+
+Tambien creamos un nuevo acumulador para nuestra suma de cuadrados.
+
+Volvemos a iterar sobre los vectores de nuestro conjunto de datos.
+Restamos el vector de nuestra iteracion con nuestro vector de la media.
+Esto nos crea un nuevo vector con la diferencia de los dos valores
+sobre los cuales estamos iterando. Podemos entonces multiplicar este vector
+con si mismo y tenemos nuestra diferencia al cuadrado. Podemos ahora sumar y guardar
+esto en nuestro acumulador y seguir con la siguiente iteracion.
+
+Una vez terminemos, una vez mas tenemos que reducir nuestro vector de
+suma de cuadrados a un escalar. Procesamos nustro prefijo y reciduo y
+tendremos entonces nuestra suma de cuadrados.
+
+Ya nos esto estamos listos para calcular la varianza. Dividimos nuestro
+suma de cuadrados sobre N y sacamos la raiz cuadrada.
+
+Ya con esto deberiamos poder entender todo el codigo en nuestra funcion
+vectorizada. Yendo paso por paso, creo que es claro que redujimos el numero
+de operaciones significativamente, tal vez no por un factor de dos, por que
+si hay otras operaciones que tenemos que hacer para que esto sea posible,
+pero muy carca.
+
+Si corremos esto, obtenemos que procesa los mil millones de valores en
+637ms. Aqui no es exactamente el doble de rapido, pero casi. De nuevo, hay
+un costo a correr este codigo en vectores. Por una mejora de 1.7x, esta bueno,
+pero no es algo del otro mundo.
+
+Que pasa si esa constante LANES la pasamos a 4. Yo se que mi hardware
+MacBook Pro con un M4 Pro solo tiene la extension ARM Neon, por lo cual
+en teoria solo deberia poder vectorizar hasta 2 valores de tipo double
+en simultaneo. Pero veamos a ver que pasa.
+
+Al correr el benchmark con 4 lanes (o sea utilizando vectores de tamano 4)
+vemos que el rendimiento no se queda igual, sino que baja a 332ms.
+
+Pasamos de una mejora de 1.7x a 3.3x. Que paso? Yo pense que mi hardware
+solo podia vectorizar hasta 2 valores al mismo tiempo con SIMD.
+
+Aunque nuestro codigo se lea como que estamos trabajando con vectores
+de tamano 4, el compilador esta aprovechando un comportamiento de las CPUs
+modernas que se llamada ILP o Instruction Level Paralelism. En espanol
+paralelismo a nivel de instruccion. ILP consiste en que una CPU puede correr
+varias instrucciones al mismo tiempo con tal que sean independientes.
+
+Ya vamos a ver un poco como funciona esto. Pero tengan en cuenta que
+en nuestro codigo se ve como un vector de 4 elementos, pero para nuestra
+CPU son 2 vectores de 2 elementos.
+
+Una CPU moderna tiene que hacer varias cosas para poder ejecutar una
+instruccion a completitud. Tiene que decodificar la instruccion,
+ejecutar la instruccion, esperar a que llegue el dato desde la memoria,
+a veces tiene que escribir a memoria y eso tambien toma tiempo. Esto significa
+que una instruccion puede tomar mas de un ciclo en ejecutarse.
+
+Un ciclo es ese numero que ponen en el marketing de las CPUs que tipicamente
+se mide en GHz o sea miles de millones de ciclos.
+
+Pero entonces, si una instruccion varios ciclos, estamos potencialmente
+dejando rendimiento sobre la mesa. Para solucionar esto es ILP.
+
+Entonces supongamos que tenemos una instruccion que toma un numero de ciclos.
+
+<!-- hago dibjo de una instruccion -->
+
+Y entonces mientras esta instruccion se esta ejecutando comenzamos a procesar otra
+instruccion.
+
+<!-- dibjo otra instruccion abajo con un offset para mostrar pipelining -->
+
+Y asi podemos ejectuar dos instruccion casi que al mismo tiempo.
+
+Pero hay algo importante, para que esto funcione las dos instruccion tiene que
+ser completamente independientes. Si instruccion 1 afecta un espacio en memoria X,
+este podria ser un acumulador por ejemplo, y la instruccion 2 afecta ese mismo
+espacio de memoria. Por definicion, no podemos ejectuar la instruccion 2 hasta
+que la 1 se haya ejecutado completamente.
+
+En nuestro codigo SIMD, el compilador sabe esto. Nuestro acumulador de 4
+valores, lo divide en 2 acumuladores de 2. Las operaciones dentro del bucle
+las convierte en instrucciones separadas e independientes para poder
+hacer ILP. 
+
+Mi CPU, el M4 Pro, tiene por nucleo 32 registros vectoriales de 128bits.
+
+En teoria, podriamos aumentar los lanes (el tamano de nuestro vector)
+a 8 y sacarle mas provecho.
+
+Si aumentos Lanes a 8, el rendimiento mejora otra vez. Ahora toma 208ms.
+
+Pasamos a una mejora de 5.2x. En un solo nucleo. No hemos agregado multiples nucleos.
+
+Para no invertir mas tiempo, aumentar los lanes ya no genera mejoras despues
+de este punto. Los probe hasta 64 que en teoria es el limite de registros
+y nunca supera los 205 a 210 ms.
+
+Para hacer un resumen de lo que hemos visto hasta ahora.
+
+1. Aprendimos conceptos como vector, prefijo y sufijo, splat
+2. Aprendimos a vectorizar codigo con SIMD
+2. Aprendimos como una CPU puede utilizar ILP para correr instrucciones en paralelo.
+
+Ahora que ya llegamos a un limite de lo que podemos hacer
+con un nucleo, paralelicemos utilizando multiples nucleos.
+
+En Rust podemos hacer esto con la libreria rayon. rayon nos permite ejecutar
+codigo en multiples nucleos con patrones idiomaticos.
+
+<!-- quito el codigo en un nucleo y muestro el codigo multi-nucleo -->
+
+```rust
+const LANES: usize = 8;
+const TAMAÑO_BLOQUE: usize = 32 * 1024 / size_of::<f64>();
+
+pub fn desviacion_estandar_8_par(data: &[f64]) -> f64 {
+    let n = data.len() as f64;
+
+    let suma = data
+        .par_chunks(TAMAÑO_BLOQUE)
+        .map(|bloque| {
+            let (prefijo, vectores, sufijo) = bloque.as_simd::<LANES>();
+
+            let mut suma_vec = Simd::splat(0.0);
+            for &vector in vectores {
+                suma_vec += vector;
+            }
+
+            let mut suma = suma_vec.reduce_sum();
+            for &valor in prefijo.iter().chain(sufijo) {
+                suma += valor;
+            }
+
+            suma
+        })
+        .reduce(|| 0.0, |a, b| a + b);
+
+    let media = suma / n;
+
+    let media_vec = Simd::<f64, LANES>::splat(media);
+    let suma_cuadrados = data
+        .par_chunks(TAMAÑO_BLOQUE)
+        .map(|bloque| {
+            let (prefijo, vectores, sufijo) = bloque.as_simd::<LANES>();
+
+            let mut suma_cuadrados_vec = Simd::splat(0.0);
+            for &vector in vectores {
+                let diff = vector - media_vec;
+                suma_cuadrados_vec += diff * diff;
+            }
+
+            let mut suma_cuadrados = suma_cuadrados_vec.reduce_sum();
+            for &valor in prefijo.iter().chain(sufijo) {
+                let diff = valor - media;
+                suma_cuadrados += diff * diff;
+            }
+
+            suma_cuadrados
+        })
+        .reduce(|| 0.0, |a, b| a + b);
+
+    (suma_cuadrados / n).sqrt()
+}
+```
+
+Este codigo es significativamente mas grande. Entonces vamos por partes.
+
+<!-- muestro solo la suma -->
+
+La parte interna de esta seccion se ve exactamente igual
+a lo que teniamos para nuestro codigo con SIMD en un solo
+nucleo.
+
+Aqui con rayon lo que hacemos es que dividimos nuestra suma en
+`chunks`. Aqui un chunk es una parte de nuestro conjunto de datos
+inicial. Aqui la constante TAMAÑO_BLOQUE es el numero de elementos
+que debe contener ese bloque. 
+
+Entonces la funcion `par_chunks` toma nuestro conjunto de datos,
+lo rompe en segmentos continuos de TAMAÑO_BLOQUE elementos
+y correra estos en paralelo a traves de todos los nucleos de
+nuestra maquina. Dentro de cada nucleo va a correr casi el mismo codigo
+que teniamos ya.
+
+Finalmente hay una llamado a reduce, por que tenemos que juntar ademas
+el resultado de cada nucleo en un resultado unico. Como vemos
+aqui la funcion reduce los suma.
+
+Asi calculamos nuestra suma con paralelizacion a nivel de instruccion,
+de vector y de nucleo.
+
+<!-- muestra la parto del codigo de la suma de cuadrados -->
+
+Para la suma de cuadrados es mas o menos lo mismo.
+
+Asi tenemos entonces nuestra version mas rapida de la desviacion
+estadar. Si la corremos y medimos su rendimiento vemos que se demora...
+
+67ms. Esto es muy cercano a nuestro limite teorico de 58.6ms.
+
+Aqui pasamos de muy lejos de nuestro limite teorico a estar solo
+a 13% de nuestro limite teorico.
+
+Como cada nucleo tiene 32 registros SIMD podemos aprovechar al maximo
+cada uno.
+
+Tipicamente en un video aqui cerrariamos. Llegamos muy cerca
+a nuestro limite teorico y aprendimos un monton. Pero creo
+que aun podemos mejorar. Que pasara si envez de hacer
+dos iteraciones sobre el cojunto de datos, pudieramos
+hacer solo una. Asi en teoria podriamos duplicar el rendimiento
+nuestro calculo.
+
+Como podriamos hacer esto? La desviacion estandar se puede
+transformar para que requiera una sola iteracion sobre los datos.
+
+<!-- hago a mano la transformacion algebraica -->
+
+Esta version nos permitiria calcular la desviacion estandar
+en una sola iteracion. Podemos calcular el limite
+teorico para esta implementacion como 8GB / 273GBps. Esto nos da 
+29ms.
+
+Esta version tiene un peligro, y es la catastrofic cancellation.
+Esto es un comportamiento de los numeros de punto flotante
+cuando se restan dos numeros muy grandes. Aqui puede haber una
+perdida grande de precision que lleve a que nuestro resultado
+no sea el esperado.
+
+Aqui vamos a asumir el riesgo con el fin de mejorar rendimiento.
+Este tipo de decisiones se toman todo el tiempo cuando intentamos
+hacer soluciones de alto rendimiento. Pueden ser riesgos como
+este o por ejemplo utilizar en generador de numeros que no sea
+seguro criptograficamente, todo depende del contexto.
+
+Bueno veamos la implementacion de un solo paso.
+
+<!-- muestro codigo en pantalla -->
+
+```rust
+const LANES: usize = 8;
+const TAMAÑO_BLOQUE: usize = 32 * 1024 / size_of::<f64>();
 
 
+pub fn desviacion_estandar(data: &[f64]) -> f64 {
+    let n = data.len() as f64;
 
+    let (suma, suma_cuadrados) = data
+        .par_chunks(TAMAÑO_BLOQUE)
+        .map(|bloque| {
+            let (prefijo, vectores, sufijo) = bloque.as_simd::<LANES>();
 
+            let mut suma_vec = Simd::splat(0.0);
+            let mut suma_cuadrados_vec = Simd::splat(0.0);
 
-## Video 2: Estructuras de datos para SIMD: AoS vs SoA
+            for &vector in vectores {
+                suma_vec += vector;
+                suma_cuadrados_vec += vector * vector;
+            }
+
+            let mut suma = suma_vec.reduce_sum();
+            let mut suma_cuadrados = suma_cuadrados_vec.reduce_sum();
+
+            for &valor in prefijo.iter().chain(sufijo) {
+                suma += valor;
+                suma_cuadrados += valor * valor;
+            }
+
+            (suma, suma_cuadrados)
+        })
+        .reduce(
+            || (0.0, 0.0),
+            |(suma_a, suma_cuadrados_a), (suma_b, suma_cuadrados_b)| {
+                (suma_a + suma_b, suma_cuadrados_a + suma_cuadrados_b)
+            },
+        );
+
+    let media = suma / n;
+    let varianza = (suma_cuadrados / n) - media * media;
+    varianza.max(0.0).sqrt()
+}
+```
+
+Este codigo se ve muy similar, pero como vemos la suma y la
+suma de cuadrados se hacen en la misma iteracion. Si corremos
+esto asi el tiempo baja a 33.5ms. Estamos super cerca de nuestro
+limite teorico de 29ms.
+
+De nuevo, esta implementacion puede que no tenga sentido si se
+utilizan numero grandes, existen otras implementaciones de la
+desviacion estandar como el Welford que es numericamente
+estable. Lo importante es aprender entender que costo
+tiene cada implementacion y poder saber cuales son esos limites
+o mas bien objetivos de rendimiento.
+
+Eso es todo por este video. En futuros videos vamos a ver como
+definir estructuras de datos optimas para vectorizacion por 
+las tipicas que aprendemos o que la inteligencia artifical sugiere
+no siempre son las mejoras.
+
+Muchas gracias y nos vemos en otro video.
