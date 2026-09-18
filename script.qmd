@@ -1,8 +1,8 @@
 # Curso SIMD introductorio
 
-## Objetivo: Al finalizar este curso el estudiante podra diseñar algoritmos
-utilizando SIMD. El estudiante podra traducir codigo escalar a codigo
-de vectores, pensando en como re-estructurar los datos para trabajar
+## Objetivo: Al finalizar este curso el estudiante podrá diseñar algoritmos
+utilizando SIMD. El estudiante podrá traducir código escalar a código
+de vectores, pensando en cómo reestructurar los datos para trabajar
 con SIMD.
 
 Nota: Todos estos videos van a ser en formato light board, donde se dibuja
@@ -12,52 +12,52 @@ y escribe sobre una pizarra.
 
 #### Formato
 
-Lo voy a grabar en formato lightboard. El codigo no lo voy a escribir
-en el lightboard. Se va a sobre poner en post produccion. Se pondra el
-codigo a un lado y seguire yo en la pantalla.
+Lo voy a grabar en formato lightboard. El código no lo voy a escribir
+en el lightboard. Se va a sobreponer en postproducción. Se pondrá el
+código a un lado y seguiré yo en la pantalla.
 
-#### Calculo del maximo teorico
+#### Cálculo del máximo teórico
 
-Vamos a simular mil millones de valores de tipo double precision (64bits). Esto es equivalente
-a unos 8GB de datos. Mi MacBook Pro M4 Pro tiene 273 GB/s de bandaancha de memoria; 
-asumiendo que podemos optimizar el codigo de tal manera que la CPU no es un cuello de botella
-podemos calcular un limite teorico de (2 * 8 / 273) segundos (58.6 ms). Multiplicamos por 2
-por que hacemos dos corridas sobre los datos. Lo que significa que tenemos que leer las 8 GB
+Vamos a simular mil millones de valores de tipo double precision (64 bits). Esto es equivalente
+a unos 8 GB de datos. Mi MacBook Pro M4 Pro tiene 273 GB/s de ancho de banda de memoria; 
+asumiendo que podemos optimizar el código de tal manera que la CPU no es un cuello de botella
+podemos calcular un límite teórico de (2 * 8 / 273) segundos (58.6 ms). Multiplicamos por 2
+porque hacemos dos corridas sobre los datos. Lo que significa que tenemos que leer las 8 GB
 dos veces.
 
 Para poder contrastar esta cota con el benchmark, simd_double_pass_par.rs implementa el doble
 paso con SIMD y paralelismo multihilo (rayon). El benchmark lo mide en 67.2 ms, esto es ~87%
-del ancho de banda pico (16 GB / 67.2 ms = 238 GB/s), lo que confirma que el limite teorico es
-alcanzable en la practica.
+del ancho de banda pico (16 GB / 67.2 ms = 238 GB/s), lo que confirma que el límite teórico es
+alcanzable en la práctica.
 
 ### Script
 
-Hola todos, hoy en dia tenemos computadores muy potentes que pueden
-correr calculos numericos sobre miles de millones de datos en pocos
-segundos. Que pensarias si te dijera que en realidad estas subutilizando
-tu computador. Seas una persona trabajando localmente en su laptop
-o una empresa que inverte cientos de miles o millones de dolares cada
-mes en infraestructura en la nube, existe un muy alta probabilidad
-que no estes utilizando el hardware por el que pagas a su maximo potencial.
-Y no estos hablando de que podrias estarle sacando 10% mas a tu CPU,
-hablo de ordenes de magnitud, 10 veces, 50 veces, 100 veces mejor
+Hola a todos, hoy en día tenemos computadores muy potentes que pueden
+correr cálculos numéricos sobre miles de millones de datos en pocos
+segundos. ¿Qué pensarías si te dijera que en realidad estás subutilizando
+tu computador? Ya sea una persona trabajando localmente en su laptop
+o una empresa que invierte cientos de miles o millones de dólares cada
+mes en infraestructura en la nube, existe una muy alta probabilidad
+de que no estés utilizando el hardware por el que pagas a su máximo potencial.
+Y no estoy hablando de que podrías estarle sacando 10% más a tu CPU,
+hablo de órdenes de magnitud, 10 veces, 50 veces, 100 veces mejor
 rendimiento.
 
 Para cuando termine este video vas a aprender de lo que es capaz una
-CPU moderna y como escribir algoritmos que la utilicen a su maximo
+CPU moderna y cómo escribir algoritmos que la utilicen a su máximo
 potencial.
 
-La desviacion estandar es una medida utilizada en la estadistica
-para saber que tan disperso es un conjunto de observaciones. No vamos
-a entrar en mucho detalle del lado estadistico. Si utilizamos NumPy,
-seguramente la libreria mas popular para computacion numerica en el
-ecosistema de Python, para calcular la desviacion estandar de mil millones
-de obervaciones vemos que se demora mas o menos unos 0.957 segundos en mi MacBook M4 Pro.
+La desviación estándar es una medida utilizada en la estadística
+para saber qué tan disperso es un conjunto de observaciones. No vamos
+a entrar en mucho detalle del lado estadístico. Si utilizamos NumPy,
+seguramente la librería más popular para computación numérica en el
+ecosistema de Python, para calcular la desviación estándar de mil millones
+de observaciones vemos que se demora más o menos unos 0.957 segundos en mi MacBook M4 Pro.
 
-Esto es lento? Esto es rapido? No se, veamos como se calcula la
-desviacion estandar e intentemos calcular un maximo teorico.
+¿Esto es lento? ¿Esto es rápido? No sé, veamos cómo se calcula la
+desviación estándar e intentemos calcular un máximo teórico.
 
-La formula de la desviacion estandar es la siguiente:
+La fórmula de la desviación estándar es la siguiente:
 
 $$
 \sigma = \sqrt{\frac{\sum_{i=1}^{N}(x_i - \mu)^2}{N}}
@@ -69,55 +69,55 @@ $$
 \mu = \frac{1}{N}\sum_{i=1}^{N} x_i
 $$
 
-Esta formula implica dos sumas sobre el total de los datos. Hay una particularidad,
+Esta fórmula implica dos sumas sobre el total de los datos. Hay una particularidad,
 la suma de la diferencia de cuadrados depende de la media. Por lo cual estas dos se tienen
-que correr por separado. Primero sumar el total para calcular la media, despues sumar
+que correr por separado. Primero sumar el total para calcular la media, después sumar
 las diferencias de cuadrados.
 
-En el ejemplo de NumPy teniamos mil millones de observaciones de tipo double. Un double
-tiene 8 bytes. Por lo cual nuestro conjuntos de datos son 8GB. 
-Si tenemos que iterar dos veces sobre los 8GB, estariamos leyendo 16GB de datos.
+En el ejemplo de NumPy teníamos mil millones de observaciones de tipo double. Un double
+tiene 8 bytes. Por lo cual nuestro conjunto de datos es de 8 GB. 
+Si tenemos que iterar dos veces sobre los 8 GB, estaríamos leyendo 16 GB de datos.
 
-Mi MacBook M4 Pro tiene una bandaancha de memoria de 273GB/s. La bandaancha de la memoria es
-velocidad en la que se puede leer datos de la memoria. En este caso, Apple afirma que deberiamos
-poder leer 273GB de datos cada segundo. Entonces si intentamos calcular cuanto nos tomaria leer
-16GB, esto tomaria mas o menos 58ms. Esto seria asumiendo que la CPU no es cuello de botella.
+Mi MacBook M4 Pro tiene un ancho de banda de memoria de 273 GB/s. El ancho de banda de la memoria es
+la velocidad en la que se puede leer datos de la memoria. En este caso, Apple afirma que deberíamos
+poder leer 273 GB de datos cada segundo. Entonces si intentamos calcular cuánto nos tomaría leer
+16 GB, esto tomaría más o menos 58 ms. Esto sería asumiendo que la CPU no es cuello de botella.
 
-La razon por la cual estoy asumiendo que la CPU no es cuello de botella es porque quiero ver
-que tanto nos podemos acercar a este numero. Si tuvieramos una CPU infinitamente rapida,
-nunca podriamos superar este numero.
+La razón por la cual estoy asumiendo que la CPU no es cuello de botella es porque quiero ver
+qué tanto nos podemos acercar a este número. Si tuviéramos una CPU infinitamente rápida,
+nunca podríamos superar este número.
 
-Entonces en nuestro absoluto mejor escenario deberia tomarse 58ms. 
-Esto es 16 veces mas rapido que la version de NumPy.
+Entonces en nuestro absoluto mejor escenario debería tomarse 58 ms. 
+Esto es 16 veces más rápido que la versión de NumPy.
 
-Cuando mencione al principio que estabamos dejando mucho rendimiento sobre la mesa
-era verdad. Y aqui estamos hablando de un calculo relativamente descomplicado.
-En un calculo donde la complejidad de tiempo crece de forma cuadratica por ejemplo,
-el cambio puede ser muchisimo mayor.
+Cuando mencioné al principio que estábamos dejando mucho rendimiento sobre la mesa
+era verdad. Y aquí estamos hablando de un cálculo relativamente descomplicado.
+En un cálculo donde la complejidad de tiempo crece de forma cuadrática por ejemplo,
+el cambio puede ser muchísimo mayor.
 
 Si queremos optimizar este tipo de operaciones tenemos que utilizar un lenguaje
 que nos permita trabajar cercanamente con la CPU. Yo elijo Rust porque me
 parece un lenguaje que funciona y se lee muy bien para este tipo de trabajos.
 
-<!-- Muestra codigo en la pantalla -->
+<!-- Muestra código en la pantalla -->
 
 Sin embargo, todo esto se puede llevar a C++ o lenguajes similares
 con relativa facilidad. Hago la nota que vamos a utilizar portable_SIMD
-que es una funcionalidad nightly, lo que significa que aun no esta
-estabilizada en la libreria estandar. Si correr nightly en tu proyecto
-no es posible se pueden utilizar funciones intrinsicas de la CPU
-o librerias como wide.
+que es una funcionalidad nightly, lo que significa que aún no está
+estabilizada en la librería estándar. Si correr nightly en tu proyecto
+no es posible, se pueden utilizar funciones intrínsecas de la CPU
+o librerías como wide.
 
-Entonces empece escribiendo la version escalar y corri un benchmark.
+Entonces empecé escribiendo la versión escalar y corrí un benchmark.
 
-El resultado fue 1.0803 segundos. Es un poco mas lento que NumPy. Por que
-ocurre esto? No estoy muy seguro, me tocaria sentarme a revisar el codigo de
-numpy. Pero esta relativamente cerca, ahora mismo la implementacion de numpy es 13%
-mas rapida. Podemos decir que estas dos implementaciones son equivalentes.
+El resultado fue 1.0803 segundos. Es un poco más lento que NumPy. ¿Por qué
+ocurre esto? No estoy muy seguro, me tocaría sentarme a revisar el código de
+numpy. Pero está relativamente cerca, ahora mismo la implementación de numpy es 13%
+más rápida. Podemos decir que estas dos implementaciones son equivalentes.
 
-Que pasa si ahora convertimos esta funcion en codigo de vectores.
+¿Qué pasa si ahora convertimos esta función en código de vectores?
 
-<!-- Muestra codigo en la pantalla -->
+<!-- Muestra código en la pantalla -->
 
 ```rust
 const LANES: usize = 2;
@@ -156,206 +156,206 @@ pub fn desviacion_estandar(data: &[f64]) -> f64 {
 }
 ```
 
-Ok... este codigo se ve mucho mas complicado. Pero vamos a ver que cuando
-entendamos bien lo que esta ocurriendo vamos a poder leerlo sin mayor problema.
+Ok... este código se ve mucho más complicado. Pero vamos a ver que cuando
+entendamos bien lo que está ocurriendo vamos a poder leerlo sin mayor problema.
 
 Concepto 1: Vectores SIMD
 
-Una de las palabras mas confusas en la ciencia de la computacion es la palabra
-vector. Vector puede significar muchisimas cosas, pero cuando hablamos de SIMD
-especificamente es:
+Una de las palabras más confusas en la ciencia de la computación es la palabra
+vector. Vector puede significar muchísimas cosas, pero cuando hablamos de SIMD
+específicamente es:
 
 Un conjunto de datos continuos e independientes del mismo tipo que se puede almacenar en
-un registro de la CPU que permite procesar todos los valores en con una sola
-instruccion al mismo tiempo.
+un registro de la CPU que permite procesar todos los valores con una sola
+instrucción al mismo tiempo.
 
-SIMD significa Single-Instruccion-Multiple-Data. En espanol Una-Instruccion-Multiples-Datos.
-El vector simplemente es la unidad de multiples datos que se procesa en una sola instruccion.
+SIMD significa Single-Instruction-Multiple-Data. En español Una-Instrucción-Múltiples-Datos.
+El vector simplemente es la unidad de múltiples datos que se procesa en una sola instrucción.
 
-Esto significa que un vector de SIMD tiene un tamano definido y depende la CPU que
+Esto significa que un vector de SIMD tiene un tamaño definido y depende de la CPU que
 lo corre.
 
-Mi CPU es un M4 Pro de Apple. Esta tiene la extension Neon. Un registro Neon tiene 128bits
-de longitud, por lo cual puede procesar hasta 2 doubles de 64 bits al mismo tiempo. Pero tambien
-podria procesar 4 floats de 32 bits al mismo tiempo, o 16 bytes al mismo tiempo, etc.
+Mi CPU es un M4 Pro de Apple. Esta tiene la extensión Neon. Un registro Neon tiene 128 bits
+de longitud, por lo cual puede procesar hasta 2 doubles de 64 bits al mismo tiempo. Pero también
+podría procesar 4 floats de 32 bits al mismo tiempo, o 16 bytes al mismo tiempo, etc.
 
-En teoria entonces mi macbook deberia poder procesar hasta dos doubles al mismo tiempo.
+En teoría entonces mi MacBook debería poder procesar hasta dos doubles al mismo tiempo.
 
-De ahi viene el `LANES = 2`. Estamos teniendo en cuenta que nuestro codigo SIMD
-puede procesar hasta 2 doubles as mismo tiempo.
+De ahí viene el `LANES = 2`. Estamos teniendo en cuenta que nuestro código SIMD
+puede procesar hasta 2 doubles al mismo tiempo.
 
 Concepto 2: Alineamiento, Residuos, Vectores
 
 Cuando vamos a utilizar SIMD generalmente es porque vamos
 a procesar un conjunto grande de memoria continua. Esto puede
 ser un gran arreglo o slice, un string, etc. En memoria
-SIMD exige que la memoria tenga cierta alineacion. Que es la
-alineacion de memoria? 
+SIMD exige que la memoria tenga cierta alineación. ¿Qué es la
+alineación de memoria? 
 
-Como muchos de ustedes sabran, un arreglo es un espacio continuo en
+Como muchos de ustedes sabrán, un arreglo es un espacio continuo en
 memoria. Pero para que un vector SIMD se pueda copiar eficientemente de
 memoria a un registro SIMD los datos deben vivir en un lugar que sea digamos
-"compatible" con el tamano del vector.
+"compatible" con el tamaño del vector.
 
 <!-- Hago dibujo en pantalla mientras explico -->
 
-Por ejemplo un vector de 128bits (o 2 double) debe estar alineado con 16 bytes.
+Por ejemplo un vector de 128 bits (o 2 doubles) debe estar alineado con 16 bytes.
 Si el vector vive en memoria, no puede iniciar por ejemplo en el byte 8,
-debe estar en 0, 16, 32 o un multiplo de 16. Pero un arreglo tradicional
-puede iniciar en cualquier multiplo de 8 bytes.
-Tenemos dos opciones, 1. Re-alinear el la memoria con el vector cada vez que
-copiamos un valor a un registro. 2. Sacar un prefujo y solo tomar en cuenta
+debe estar en 0, 16, 32 o un múltiplo de 16. Pero un arreglo tradicional
+puede iniciar en cualquier múltiplo de 8 bytes.
+Tenemos dos opciones, 1. Realinear la memoria con el vector cada vez que
+copiamos un valor a un registro. 2. Sacar un prefijo y solo tomar en cuenta
 vectores a partir del primer valor alineado.
 
-Despues esta el sufijo, que pasa si tenemos un arreglo de datos que no es un
-multiplo de tamano del vector. por ejemplo si vamos a utilizar vectores
-de tamano 2, y tenemos un arreglo de 3, vamos a tener un sufijo, a veces
-tambien llamado residuo, de 1. No hay manera de que ese 1 entre en un vector simd
-de tamano 2.
+Después está el sufijo. ¿Qué pasa si tenemos un arreglo de datos que no es un
+múltiplo de tamaño del vector? Por ejemplo si vamos a utilizar vectores
+de tamaño 2, y tenemos un arreglo de 3, vamos a tener un sufijo, a veces
+también llamado residuo, de 1. No hay manera de que ese 1 entre en un vector SIMD
+de tamaño 2.
 
-Tenemos entonces la funcion `as_simd`, esta nos crea 3 diferentes variables, 
-el prefijo que es un slice de escalares con lo que esta en el perfijo, los vectores
+Tenemos entonces la función `as_simd`, esta nos crea 3 diferentes variables, 
+el prefijo que es un slice de escalares con lo que está en el prefijo, los vectores
 que contienen los vectores SIMD, y el sufijo (o residuo) que contiene esos
 escalares que no pudimos organizar dentro de los vectores SIMD.
 
-Despues de esto tenemos que escribir los acumuladores. La funcion `splat`
+Después de esto tenemos que escribir los acumuladores. La función `splat`
 crea un nuevo vector con los valores inicializados a partir de un escalar.
 
 <!-- dibujo un vector de len 2 en el lightboard inicializado en 0 -->
 
-Con nuestro acumulador creado ahora vamos a interar por los vectores y vamos
-a acumularlos. Aqui vamos a estar iterando sobre nuestros datos y acumulando
-los de dos en dos. Lo que hace que este codigo sea mas rapido que el original
-es que la acumulacion toma una sola instruccion, entonces para lo que antes
-teniamos que hacer dos sumas, ahora podemos hacer dos.
+Con nuestro acumulador creado ahora vamos a iterar por los vectores y vamos
+a acumularlos. Aquí vamos a estar iterando sobre nuestros datos y acumulando
+los de dos en dos. Lo que hace que este código sea más rápido que el original
+es que la acumulación toma una sola instrucción, entonces para lo que antes
+teníamos que hacer dos sumas, ahora podemos hacer una.
 
 Una vez terminemos de acumular las sumas en nuestro vector lo podemos
-reducir. La funcion reduce_sum toma un vector y lo reduce a un escalar
+reducir. La función reduce_sum toma un vector y lo reduce a un escalar
 sumando los elementos.
 
-Hasta aqui donde vamos en el codigo. Ya tenemos la suma de los vectores.
+Hasta aquí vamos en el código. Ya tenemos la suma de los vectores.
 Como ya estamos trabajando otra vez con escalares, podemos iterar sobre
-el prefijo y el residuo, que deberian ser pocos valores y terminar de
+el prefijo y el residuo, que deberían ser pocos valores y terminar de
 calcular la suma.
 
-Teniendo ya la suma, podemos calcular la media trivialmente diviendo
-por el numero de elementos.
+Teniendo ya la suma, podemos calcular la media trivialmente dividiendo
+por el número de elementos.
 
-Ahora tenemos que calcular la suma de cuadrados. Esta parte consiste segun
-la formula de la desviacion, en sumar la diferencia entre cada valor y la
+Ahora tenemos que calcular la suma de cuadrados. Esta parte consiste según
+la fórmula de la desviación, en sumar la diferencia entre cada valor y la
 media al cuadrado.
 
-Entonces que tenemos que hacer? Necesitamos un vector que tenga el valor
+Entonces, ¿qué tenemos que hacer? Necesitamos un vector que tenga el valor
 de la media repetido.
 
-Tambien creamos un nuevo acumulador para nuestra suma de cuadrados.
+También creamos un nuevo acumulador para nuestra suma de cuadrados.
 
 Volvemos a iterar sobre los vectores de nuestro conjunto de datos.
-Restamos el vector de nuestra iteracion con nuestro vector de la media.
+Restamos el vector de nuestra iteración con nuestro vector de la media.
 Esto nos crea un nuevo vector con la diferencia de los dos valores
 sobre los cuales estamos iterando. Podemos entonces multiplicar este vector
-con si mismo y tenemos nuestra diferencia al cuadrado. Podemos ahora sumar y guardar
-esto en nuestro acumulador y seguir con la siguiente iteracion.
+con sí mismo y tenemos nuestra diferencia al cuadrado. Podemos ahora sumar y guardar
+esto en nuestro acumulador y seguir con la siguiente iteración.
 
-Una vez terminemos, una vez mas tenemos que reducir nuestro vector de
-suma de cuadrados a un escalar. Procesamos nustro prefijo y reciduo y
+Una vez terminemos, una vez más tenemos que reducir nuestro vector de
+suma de cuadrados a un escalar. Procesamos nuestro prefijo y residuo y
 tendremos entonces nuestra suma de cuadrados.
 
-Ya nos esto estamos listos para calcular la varianza. Dividimos nuestro
-suma de cuadrados sobre N y sacamos la raiz cuadrada.
+Ya con esto estamos listos para calcular la varianza. Dividimos nuestra
+suma de cuadrados sobre N y sacamos la raíz cuadrada.
 
-Ya con esto deberiamos poder entender todo el codigo en nuestra funcion
-vectorizada. Yendo paso por paso, creo que es claro que redujimos el numero
-de operaciones significativamente, tal vez no por un factor de dos, por que
+Ya con esto deberíamos poder entender todo el código en nuestra función
+vectorizada. Yendo paso por paso, creo que es claro que redujimos el número
+de operaciones significativamente, tal vez no por un factor de dos, porque
 si hay otras operaciones que tenemos que hacer para que esto sea posible,
-pero muy carca.
+pero muy cerca.
 
 Si corremos esto, obtenemos que procesa los mil millones de valores en
-637ms. Aqui no es exactamente el doble de rapido, pero casi. De nuevo, hay
-un costo a correr este codigo en vectores. Por una mejora de 1.7x, esta bueno,
+637 ms. Aquí no es exactamente el doble de rápido, pero casi. De nuevo, hay
+un costo a correr este código en vectores. Por una mejora de 1.7x, está bueno,
 pero no es algo del otro mundo.
 
-Que pasa si esa constante LANES la pasamos a 4. Yo se que mi hardware
-MacBook Pro con un M4 Pro solo tiene la extension ARM Neon, por lo cual
-en teoria solo deberia poder vectorizar hasta 2 valores de tipo double
-en simultaneo. Pero veamos a ver que pasa.
+¿Qué pasa si esa constante LANES la pasamos a 4? Yo sé que mi hardware
+MacBook Pro con un M4 Pro solo tiene la extensión ARM Neon, por lo cual
+en teoría solo debería poder vectorizar hasta 2 valores de tipo double
+en simultáneo. Pero veamos a ver qué pasa.
 
-Al correr el benchmark con 4 lanes (o sea utilizando vectores de tamano 4)
-vemos que el rendimiento no se queda igual, sino que baja a 332ms.
+Al correr el benchmark con 4 lanes (o sea utilizando vectores de tamaño 4)
+vemos que el rendimiento no se queda igual, sino que baja a 332 ms.
 
-Pasamos de una mejora de 1.7x a 3.3x. Que paso? Yo pense que mi hardware
-solo podia vectorizar hasta 2 valores al mismo tiempo con SIMD.
+Pasamos de una mejora de 1.7x a 3.3x. ¿Qué pasó? Yo pensé que mi hardware
+solo podía vectorizar hasta 2 valores al mismo tiempo con SIMD.
 
-Aunque nuestro codigo se lea como que estamos trabajando con vectores
-de tamano 4, el compilador esta aprovechando un comportamiento de las CPUs
-modernas que se llamada ILP o Instruction Level Paralelism. En espanol
-paralelismo a nivel de instruccion. ILP consiste en que una CPU puede correr
+Aunque nuestro código se lea como que estamos trabajando con vectores
+de tamaño 4, el compilador está aprovechando un comportamiento de las CPUs
+modernas que se llama ILP o Instruction Level Parallelism. En español
+paralelismo a nivel de instrucción. ILP consiste en que una CPU puede correr
 varias instrucciones al mismo tiempo con tal que sean independientes.
 
-Ya vamos a ver un poco como funciona esto. Pero tengan en cuenta que
-en nuestro codigo se ve como un vector de 4 elementos, pero para nuestra
+Ya vamos a ver un poco cómo funciona esto. Pero tengan en cuenta que
+en nuestro código se ve como un vector de 4 elementos, pero para nuestra
 CPU son 2 vectores de 2 elementos.
 
 Una CPU moderna tiene que hacer varias cosas para poder ejecutar una
-instruccion a completitud. Tiene que decodificar la instruccion,
-ejecutar la instruccion, esperar a que llegue el dato desde la memoria,
-a veces tiene que escribir a memoria y eso tambien toma tiempo. Esto significa
-que una instruccion puede tomar mas de un ciclo en ejecutarse.
+instrucción a completitud. Tiene que decodificar la instrucción,
+ejecutar la instrucción, esperar a que llegue el dato desde la memoria,
+a veces tiene que escribir a memoria y eso también toma tiempo. Esto significa
+que una instrucción puede tomar más de un ciclo en ejecutarse.
 
-Un ciclo es ese numero que ponen en el marketing de las CPUs que tipicamente
+Un ciclo es ese número que ponen en el marketing de las CPUs que típicamente
 se mide en GHz o sea miles de millones de ciclos.
 
-Pero entonces, si una instruccion varios ciclos, estamos potencialmente
+Pero entonces, si una instrucción toma varios ciclos, estamos potencialmente
 dejando rendimiento sobre la mesa. Para solucionar esto es ILP.
 
-Entonces supongamos que tenemos una instruccion que toma un numero de ciclos.
+Entonces supongamos que tenemos una instrucción que toma un número de ciclos.
 
-<!-- hago dibjo de una instruccion -->
+<!-- hago dibujo de una instrucción -->
 
-Y entonces mientras esta instruccion se esta ejecutando comenzamos a procesar otra
-instruccion.
+Y entonces mientras esta instrucción se está ejecutando comenzamos a procesar otra
+instrucción.
 
-<!-- dibjo otra instruccion abajo con un offset para mostrar pipelining -->
+<!-- dibujo otra instrucción abajo con un offset para mostrar pipelining -->
 
-Y asi podemos ejectuar dos instruccion casi que al mismo tiempo.
+Y así podemos ejecutar dos instrucciones casi que al mismo tiempo.
 
-Pero hay algo importante, para que esto funcione las dos instruccion tiene que
-ser completamente independientes. Si instruccion 1 afecta un espacio en memoria X,
-este podria ser un acumulador por ejemplo, y la instruccion 2 afecta ese mismo
-espacio de memoria. Por definicion, no podemos ejectuar la instruccion 2 hasta
+Pero hay algo importante, para que esto funcione las dos instrucciones tienen que
+ser completamente independientes. Si la instrucción 1 afecta un espacio en memoria X,
+este podría ser un acumulador por ejemplo, y la instrucción 2 afecta ese mismo
+espacio de memoria. Por definición, no podemos ejecutar la instrucción 2 hasta
 que la 1 se haya ejecutado completamente.
 
-En nuestro codigo SIMD, el compilador sabe esto. Nuestro acumulador de 4
+En nuestro código SIMD, el compilador sabe esto. Nuestro acumulador de 4
 valores, lo divide en 2 acumuladores de 2. Las operaciones dentro del bucle
 las convierte en instrucciones separadas e independientes para poder
 hacer ILP. 
 
-Mi CPU, el M4 Pro, tiene por nucleo 32 registros vectoriales de 128bits.
+Mi CPU, el M4 Pro, tiene por núcleo 32 registros vectoriales de 128 bits.
 
-En teoria, podriamos aumentar los lanes (el tamano de nuestro vector)
-a 8 y sacarle mas provecho.
+En teoría, podríamos aumentar los lanes (el tamaño de nuestro vector)
+a 8 y sacarle más provecho.
 
-Si aumentos Lanes a 8, el rendimiento mejora otra vez. Ahora toma 208ms.
+Si aumento LANES a 8, el rendimiento mejora otra vez. Ahora toma 208 ms.
 
-Pasamos a una mejora de 5.2x. En un solo nucleo. No hemos agregado multiples nucleos.
+Pasamos a una mejora de 5.2x. En un solo núcleo. No hemos agregado múltiples núcleos.
 
-Para no invertir mas tiempo, aumentar los lanes ya no genera mejoras despues
-de este punto. Los probe hasta 64 que en teoria es el limite de registros
+Para no invertir más tiempo, aumentar los lanes ya no genera mejoras después
+de este punto. Los probé hasta 64 que en teoría es el límite de registros
 y nunca supera los 205 a 210 ms.
 
 Para hacer un resumen de lo que hemos visto hasta ahora.
 
 1. Aprendimos conceptos como vector, prefijo y sufijo, splat
-2. Aprendimos a vectorizar codigo con SIMD
-2. Aprendimos como una CPU puede utilizar ILP para correr instrucciones en paralelo.
+2. Aprendimos a vectorizar código con SIMD
+3. Aprendimos cómo una CPU puede utilizar ILP para correr instrucciones en paralelo.
 
-Ahora que ya llegamos a un limite de lo que podemos hacer
-con un nucleo, paralelicemos utilizando multiples nucleos.
+Ahora que ya llegamos a un límite de lo que podemos hacer
+con un núcleo, paralelicemos utilizando múltiples núcleos.
 
-En Rust podemos hacer esto con la libreria rayon. rayon nos permite ejecutar
-codigo en multiples nucleos con patrones idiomaticos.
+En Rust podemos hacer esto con la librería rayon. rayon nos permite ejecutar
+código en múltiples núcleos con patrones idiomáticos.
 
-<!-- quito el codigo en un nucleo y muestro el codigo multi-nucleo -->
+<!-- quito el código en un núcleo y muestro el código multi-núcleo -->
 
 ```rust
 const LANES: usize = 8;
@@ -411,79 +411,79 @@ pub fn desviacion_estandar_8_par(data: &[f64]) -> f64 {
 }
 ```
 
-Este codigo es significativamente mas grande. Entonces vamos por partes.
+Este código es significativamente más grande. Entonces vamos por partes.
 
 <!-- muestro solo la suma -->
 
-La parte interna de esta seccion se ve exactamente igual
-a lo que teniamos para nuestro codigo con SIMD en un solo
-nucleo.
+La parte interna de esta sección se ve exactamente igual
+a lo que teníamos para nuestro código con SIMD en un solo
+núcleo.
 
-Aqui con rayon lo que hacemos es que dividimos nuestra suma en
-`chunks`. Aqui un chunk es una parte de nuestro conjunto de datos
-inicial. Aqui la constante TAMAÑO_BLOQUE es el numero de elementos
+Aquí con rayon lo que hacemos es que dividimos nuestra suma en
+`chunks`. Aquí un chunk es una parte de nuestro conjunto de datos
+inicial. Aquí la constante TAMAÑO_BLOQUE es el número de elementos
 que debe contener ese bloque. 
 
-Entonces la funcion `par_chunks` toma nuestro conjunto de datos,
+Entonces la función `par_chunks` toma nuestro conjunto de datos,
 lo rompe en segmentos continuos de TAMAÑO_BLOQUE elementos
-y correra estos en paralelo a traves de todos los nucleos de
-nuestra maquina. Dentro de cada nucleo va a correr casi el mismo codigo
-que teniamos ya.
+y correrá estos en paralelo a través de todos los núcleos de
+nuestra máquina. Dentro de cada núcleo va a correr casi el mismo código
+que teníamos ya.
 
-Finalmente hay una llamado a reduce, por que tenemos que juntar ademas
-el resultado de cada nucleo en un resultado unico. Como vemos
-aqui la funcion reduce los suma.
+Finalmente hay un llamado a reduce, porque tenemos que juntar además
+el resultado de cada núcleo en un resultado único. Como vemos
+aquí la función reduce las sumas.
 
-Asi calculamos nuestra suma con paralelizacion a nivel de instruccion,
-de vector y de nucleo.
+Así calculamos nuestra suma con paralelización a nivel de instrucción,
+de vector y de núcleo.
 
-<!-- muestra la parto del codigo de la suma de cuadrados -->
+<!-- muestra la parte del código de la suma de cuadrados -->
 
-Para la suma de cuadrados es mas o menos lo mismo.
+Para la suma de cuadrados es más o menos lo mismo.
 
-Asi tenemos entonces nuestra version mas rapida de la desviacion
-estadar. Si la corremos y medimos su rendimiento vemos que se demora...
+Así tenemos entonces nuestra versión más rápida de la desviación
+estándar. Si la corremos y medimos su rendimiento vemos que se demora...
 
-67ms. Esto es muy cercano a nuestro limite teorico de 58.6ms.
+67 ms. Esto es muy cercano a nuestro límite teórico de 58.6 ms.
 
-Aqui pasamos de muy lejos de nuestro limite teorico a estar solo
-a 13% de nuestro limite teorico.
+Aquí pasamos de muy lejos de nuestro límite teórico a estar solo
+a 13% de nuestro límite teórico.
 
-Como cada nucleo tiene 32 registros SIMD podemos aprovechar al maximo
+Como cada núcleo tiene 32 registros SIMD podemos aprovechar al máximo
 cada uno.
 
-Tipicamente en un video aqui cerrariamos. Llegamos muy cerca
-a nuestro limite teorico y aprendimos un monton. Pero creo
-que aun podemos mejorar. Que pasara si envez de hacer
-dos iteraciones sobre el cojunto de datos, pudieramos
-hacer solo una. Asi en teoria podriamos duplicar el rendimiento
-nuestro calculo.
+Típicamente en un video aquí cerraríamos. Llegamos muy cerca
+a nuestro límite teórico y aprendimos un montón. Pero creo
+que aún podemos mejorar. ¿Qué pasará si en vez de hacer
+dos iteraciones sobre el conjunto de datos, pudiéramos
+hacer solo una? Así en teoría podríamos duplicar el rendimiento
+de nuestro cálculo.
 
-Como podriamos hacer esto? La desviacion estandar se puede
-transformar para que requiera una sola iteracion sobre los datos.
+¿Cómo podríamos hacer esto? La desviación estándar se puede
+transformar para que requiera una sola iteración sobre los datos.
 
-<!-- hago a mano la transformacion algebraica -->
+<!-- hago a mano la transformación algebraica -->
 
-Esta version nos permitiria calcular la desviacion estandar
-en una sola iteracion. Podemos calcular el limite
-teorico para esta implementacion como 8GB / 273GBps. Esto nos da 
-29ms.
+Esta versión nos permitiría calcular la desviación estándar
+en una sola iteración. Podemos calcular el límite
+teórico para esta implementación como 8 GB / 273 GBps. Esto nos da 
+29 ms.
 
-Esta version tiene un peligro, y es la catastrofic cancellation.
-Esto es un comportamiento de los numeros de punto flotante
-cuando se restan dos numeros muy grandes. Aqui puede haber una
-perdida grande de precision que lleve a que nuestro resultado
+Esta versión tiene un peligro, y es la catastrophic cancellation.
+Esto es un comportamiento de los números de punto flotante
+cuando se restan dos números muy grandes. Aquí puede haber una
+pérdida grande de precisión que lleve a que nuestro resultado
 no sea el esperado.
 
-Aqui vamos a asumir el riesgo con el fin de mejorar rendimiento.
+Aquí vamos a asumir el riesgo con el fin de mejorar rendimiento.
 Este tipo de decisiones se toman todo el tiempo cuando intentamos
 hacer soluciones de alto rendimiento. Pueden ser riesgos como
-este o por ejemplo utilizar en generador de numeros que no sea
-seguro criptograficamente, todo depende del contexto.
+este o por ejemplo utilizar un generador de números que no sea
+seguro criptográficamente, todo depende del contexto.
 
-Bueno veamos la implementacion de un solo paso.
+Bueno, veamos la implementación de un solo paso.
 
-<!-- muestro codigo en pantalla -->
+<!-- muestro código en pantalla -->
 
 ```rust
 const LANES: usize = 8;
@@ -529,21 +529,21 @@ pub fn desviacion_estandar(data: &[f64]) -> f64 {
 }
 ```
 
-Este codigo se ve muy similar, pero como vemos la suma y la
-suma de cuadrados se hacen en la misma iteracion. Si corremos
-esto asi el tiempo baja a 33.5ms. Estamos super cerca de nuestro
-limite teorico de 29ms.
+Este código se ve muy similar, pero como vemos la suma y la
+suma de cuadrados se hacen en la misma iteración. Si corremos
+esto así el tiempo baja a 33.5 ms. Estamos súper cerca de nuestro
+límite teórico de 29 ms.
 
-De nuevo, esta implementacion puede que no tenga sentido si se
-utilizan numero grandes, existen otras implementaciones de la
-desviacion estandar como el Welford que es numericamente
-estable. Lo importante es aprender entender que costo
-tiene cada implementacion y poder saber cuales son esos limites
-o mas bien objetivos de rendimiento.
+De nuevo, esta implementación puede que no tenga sentido si se
+utilizan números grandes, existen otras implementaciones de la
+desviación estándar como el Welford que es numéricamente
+estable. Lo importante es aprender a entender qué costo
+tiene cada implementación y poder saber cuáles son esos límites
+o más bien objetivos de rendimiento.
 
-Eso es todo por este video. En futuros videos vamos a ver como
-definir estructuras de datos optimas para vectorizacion por 
-las tipicas que aprendemos o que la inteligencia artifical sugiere
-no siempre son las mejoras.
+Eso es todo por este video. En futuros videos vamos a ver cómo
+definir estructuras de datos óptimas para vectorización por 
+las típicas que aprendemos o que la inteligencia artificial sugiere
+no siempre son las mejores.
 
 Muchas gracias y nos vemos en otro video.
