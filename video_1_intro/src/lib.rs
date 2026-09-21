@@ -9,6 +9,8 @@ pub mod simd_double_pass_4;
 pub mod simd_double_pass_8;
 pub mod simd_double_pass_8_par;
 
+pub use std::simd;
+
 #[cfg(test)]
 mod tests {
     use super::*;
