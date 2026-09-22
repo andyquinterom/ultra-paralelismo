@@ -34,7 +34,7 @@ alcanzable en la práctica.
 
 Hola a todos, hoy en día tenemos computadores muy potentes que pueden
 correr cálculos numéricos sobre miles de millones de datos en fracciones
-se segundo. ¿Qué pensarías si te dijera que estás subutilizando
+de segundo. ¿Qué pensarías si te dijera que estás subutilizando
 tu computador? Seas una persona trabajando localmente en su laptop
 o una empresa que invierte cientos de miles o millones de dólares cada
 mes en infraestructura en la nube, existe una muy alta probabilidad
@@ -49,13 +49,13 @@ potencial.
 
 La desviación estándar es una medida utilizada en la estadística
 para saber qué tan disperso es un conjunto de observaciones. Esta
-va a ser la funcion que vamos a estudiar en este video.
+va a ser la función que vamos a estudiar en este video.
 
-Si utilizamos la implementacion de NumPy, seguramente la librería más popular para computación numérica en el
+Si utilizamos la implementación de NumPy, seguramente la librería más popular para computación numérica en el
 ecosistema de Python, para calcular la desviación estándar de mil millones
 de observaciones vemos que se demora más o menos unos 0.957 segundos en mi MacBook M4 Pro.
 
-<!-- mostrar codigo python -->
+<!-- mostrar código Python -->
 
 ```python
 x = rng.random(N, dtype=np.float64)
@@ -63,12 +63,12 @@ std = np.std(x)
 ```
 
 ¿Esto es lento? ¿Esto es rápido? No sé. 
-Cuando disenamos software es importante tener una idea lo que esperamos
-pueda hacer el hardware para el cual disenamos ese software.
+Cuando diseñamos software es importante tener una idea de lo que esperamos
+pueda hacer el hardware para el cual diseñamos ese software.
 
 Veamos cómo se calcula la
 desviación estándar e intentemos calcular un rendimiento máximo teórico
-para esta funcion.
+para esta función.
 
 
 La fórmula de la desviación estándar es la siguiente:
@@ -103,16 +103,16 @@ La razón por la cual estoy asumiendo que la CPU no es cuello de botella es porq
 qué tanto nos podemos acercar a este número. Si tuviéramos una CPU infinitamente rápida,
 nunca podríamos superar este número.
 
-Como estamos evaluando la lectura de mil millones de inputs, tengo la hipotesis que vamos
-a llegar a un cuello de botella de velocidad memoria, no de CPU.
+Como estamos evaluando la lectura de mil millones de inputs, tengo la hipótesis que vamos
+a llegar a un cuello de botella de velocidad de memoria, no de CPU.
 
 Entonces en nuestro absoluto mejor escenario debería tomarse 58 ms. 
 Esto es 16 veces más rápido que la versión de NumPy.
 
 Cuando mencioné al principio que estábamos dejando mucho rendimiento sobre la mesa
 era verdad. Y aquí estamos hablando de un cálculo relativamente descomplicado en
-una libreria muy popular y optimizada, en algoritmos e implementacion diferentes podemos
-esperar mejoras muchos mayores.
+una librería muy popular y optimizada, en algoritmos e implementaciones diferentes podemos
+esperar mejoras mucho mayores.
 
 Si queremos optimizar este tipo de operaciones tenemos que utilizar un lenguaje
 que nos permita trabajar cercanamente con la CPU. Yo elijo Rust porque me
@@ -148,8 +148,8 @@ pub fn desviacion_estandar(data: &[f64]) -> f64 {
 
 El resultado fue 1.0803 segundos. Es un poco más lento que NumPy. ¿Por qué
 ocurre esto? No estoy muy seguro, me tocaría sentarme a revisar el código de
-numpy. Pero está relativamente cerca, ahora mismo la implementación de numpy es 13%
-más rápida. Podemos decir que estas dos implementaciones practicamente equivalentes.
+NumPy. Pero está relativamente cerca, ahora mismo la implementación de NumPy es 13%
+más rápida. Podemos decir que estas dos implementaciones son prácticamente equivalentes.
 
 ¿Qué pasa si ahora convertimos esta función en código de vectores?
 
@@ -195,7 +195,7 @@ pub fn desviacion_estandar(data: &[f64]) -> f64 {
 Ok... este código se ve mucho más complicado. Pero vamos a ver que cuando
 entendamos bien lo que está ocurriendo vamos a poder leerlo sin mayor problema.
 
-Demos un paso a atras y exploremos los conceptos fundamentales de SIMD.
+Demos un paso atrás y exploremos los conceptos fundamentales de SIMD.
 
 Concepto 1: Vectores SIMD
 
@@ -217,7 +217,7 @@ Mi CPU es un M4 Pro de Apple. Esta tiene la extensión Neon. Un registro Neon ti
 de longitud, por lo cual puede procesar hasta 2 doubles de 64 bits al mismo tiempo. Pero también
 podría procesar 4 floats de 32 bits al mismo tiempo, o 16 bytes al mismo tiempo, etc.
 
-Segun esto, en teoría mi MacBook debería poder procesar hasta dos doubles al mismo tiempo.
+Según esto, en teoría mi MacBook debería poder procesar hasta dos doubles al mismo tiempo.
 
 De ahí viene el `LANES = 2`. Estamos teniendo en cuenta que nuestro código SIMD
 puede procesar hasta 2 doubles al mismo tiempo.
@@ -234,33 +234,33 @@ Como muchos de ustedes sabrán, un arreglo es un espacio continuo en
 memoria. Pero para que un vector SIMD se pueda copiar eficientemente de
 memoria a un registro SIMD los datos deben estar alineados.
 
-Alineacion en este caso se refiere a que los bytes deben existir en
-una direccion en memoria de un multiplo especifico. Por ejemplo, un double
-teniendo siendo de un tamano de 8 bytes debe viri en una direccion en memoria
-que sea multiplo de 8. Para un vector SIMD, debe estar alineado tanto
-al tamano del tipo de dato en el vector, en double seria 8, como al numero de
-lanes o mejor dicho, al tamano del vector.
+Alineación en este caso se refiere a que los bytes deben existir en
+una dirección en memoria de un múltiplo específico. Por ejemplo, un double
+siendo de un tamaño de 8 bytes debe vivir en una dirección en memoria
+que sea múltiplo de 8. Para un vector SIMD, debe estar alineado tanto
+al tamaño del tipo de dato en el vector, en double sería 8, como al número de
+lanes o mejor dicho, al tamaño del vector.
 
 <!--
 Hago dibujo en pantalla mientras explico
-Dibujo 15 bytes. Pongo marcadores de alineacion
+Dibujo 15 bytes. Pongo marcadores de alineación
 para mostrar que existe un sufijo y un prefijo.
 -->
 
 Para ilustrar esto mejor supongamos que tenemos un vector SIMD de 4 bytes.
-Si tenemos un arreglo en memoria de bytes, por los requerimientos de alineacion
-de bytes puede iniciar en cualquier direccion en memoria. Si queremos
+Si tenemos un arreglo en memoria de bytes, por los requerimientos de alineación
+de bytes puede iniciar en cualquier dirección en memoria. Si queremos
 crear un vector SIMD a partir de datos en este arreglo no podemos empezar en
-cualquier direccion en memoria, por lo que explique antes debe tener una alineacion
-de 4. Esto significa que existe el caso en el que haya una porcion de la memoria
+cualquier dirección en memoria, por lo que expliqué antes debe tener una alineación
+de 4. Esto significa que existe el caso en el que haya una porción de la memoria
 al principio del arreglo que no se pueda integrar en el vector.
-Llevando la misma logica, al final del arreglo tambien puede existir memoria
-que no este alineada. Esto puede ocurrir si el tamano del arreglo a partir
-de la seccion alineada no es un multiplo del tamano de los vectores SIMD.
-Si esto ocurre tambien tendriamos unos valores que no podrian entrar en nuestros
-vectores SIMD. Esto es lo que llamamos prefijo y sufijo o tambien residuo.
+Llevando la misma lógica, al final del arreglo también puede existir memoria
+que no esté alineada. Esto puede ocurrir si el tamaño del arreglo a partir
+de la sección alineada no es un múltiplo del tamaño de los vectores SIMD.
+Si esto ocurre también tendríamos unos valores que no podrían entrar en nuestros
+vectores SIMD. Esto es lo que llamamos prefijo y sufijo o también residuo.
 
-Hago la nota que si se pueden leer bytes desalineador, pero pueden
+Hago la nota que sí se pueden leer bytes desalineados, pero pueden
 llevar a un rendimiento disminuido, por lo cual no es recomendado.
 
 <!-- Termino el dibujo -->
@@ -270,32 +270,32 @@ el prefijo que es un slice de escalares con lo que está en el prefijo, los vect
 que contienen los vectores SIMD, y el sufijo (o residuo) que contiene esos
 escalares que no pudimos organizar dentro de los vectores SIMD.
 
-<!-- escribo la funcion en el lightboard y muestro que esta funcion nos crea
+<!-- escribo la función en el lightboard y muestro que esta función nos crea
 los espacios en memoria que dibuje previamente -->
 
 Concepto 3: Operaciones sobre vectores
 
 A los vectores SIMD se les puede manipular como si fuera cualquier
-otro valor numerico. A fin de cuenta eso son. Estos sin embargo
-no se comportan como un arreglo indexable, se compartan como un
-solo conjunto. Por lo cual cualquier operacion se aplica a todo
-el vector, no a un valor especifico dentro de el.
+otro valor numérico. A fin de cuentas, eso son. Estos, sin embargo,
+no se comportan como un arreglo indexable, se comportan como un
+solo conjunto. Por lo cual cualquier operación se aplica a todo
+el vector, no a un valor específico dentro de él.
 
-Ademas un vector solo se puede manipular con otro vector. Por ejemplo,
+Además un vector solo se puede manipular con otro vector. Por ejemplo,
 yo puedo multiplicar un vector por otro vector. Esto lo que va a hacer
-es, en un operacion, multiplicar el primero valor del vector A por el primer valor
-del vector B, el segundo valor por el segundo valor, y asi hasta completar todo el
+es, en una operación, multiplicar el primer valor del vector A por el primer valor
+del vector B, el segundo valor por el segundo valor, y así hasta completar todo el
 vector. Lo mismo si sumamos, restamos, dividimos cualquier vector.
 
-Tambien podemos hacer operaciones mutables como sumar y asignar por ejemplo.
+También podemos hacer operaciones mutables como sumar y asignar por ejemplo.
 
 Lo que no podemos hacer es multiplicar un vector por un escalar por ejemplo,
-o por un vector de un tamano diferente. Tienen que ser vectores del mismo tipo
-y tamano.
+o por un vector de un tamaño diferente. Tienen que ser vectores del mismo tipo
+y tamaño.
 
-Si llegaramos a necesitar multiplicar un vector por un escalar, tenemos que
+Si llegáramos a necesitar multiplicar un vector por un escalar, tenemos que
 primero convertir el escalar en un vector. Hay funciones como splat que hacen esto,
-Podemos utilizar esta funcion en nuestro codigo para inicializar nuestros
+Podemos utilizar esta función en nuestro código para inicializar nuestros
 acumuladores en 0.
 
 <!-- dibujo un vector de len 2 en el lightboard inicializado en 0 -->
@@ -543,7 +543,7 @@ transformar para que requiera una sola iteración sobre los datos.
 
 Esta versión nos permitiría calcular la desviación estándar
 en una sola iteración. Podemos calcular el límite
-teórico para esta implementación como 8 GB / 273 GBps. Esto nos da 
+teórico para esta implementación como 8 GB / 273 GB/s. Esto nos da 
 29 ms.
 
 Esta versión tiene un peligro, y es la catastrophic cancellation.
@@ -619,7 +619,7 @@ tiene cada implementación y poder saber cuáles son esos límites
 o más bien objetivos de rendimiento.
 
 Eso es todo por este video. En futuros videos vamos a ver cómo
-definir estructuras de datos óptimas para vectorización por 
+definir estructuras de datos óptimas para vectorización, porque
 las típicas que aprendemos o que la inteligencia artificial sugiere
 no siempre son las mejores.
 
