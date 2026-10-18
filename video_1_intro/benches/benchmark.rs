@@ -1,8 +1,9 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::{hint::black_box, time::Duration};
 use ultra_paralelismo::{
-    secuencial, secuencial_single_pass, simd_single_pass, simd_single_pass_par,
-    simd_double_pass_2, simd_double_pass_4, simd_double_pass_8, simd_double_pass_8_par,
+    secuencial, secuencial_single_pass, welford, welford_simd, simd_single_pass, simd_single_pass_par,
+    modified_welford_chan_simd, modified_welford_chan_simd_par, simd_double_pass_2, simd_double_pass_4, simd_double_pass_8,
+    simd_double_pass_8_par,
 };
 
 fn configure_criterion() -> Criterion {
@@ -12,6 +13,7 @@ fn configure_criterion() -> Criterion {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    rayon::ThreadPoolBuilder::new().num_threads(12).build_global().unwrap();
     let datos = (0..1_000_000_000)
         .map(|_| rand::random::<f64>())
         .collect::<Vec<f64>>();
@@ -21,11 +23,23 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("secuencial_single_pass", |b| {
         b.iter(|| secuencial_single_pass::desviacion_estandar(black_box(&datos)))
     });
+    c.bench_function("welford", |b| {
+        b.iter(|| welford::desviacion_estandar(black_box(&datos)))
+    });
+    c.bench_function("welford_simd", |b| {
+        b.iter(|| welford_simd::desviacion_estandar(black_box(&datos)))
+    });
     c.bench_function("simd_single_pass", |b| {
         b.iter(|| simd_single_pass::desviacion_estandar(black_box(&datos)))
     });
     c.bench_function("simd_single_pass_par", |b| {
         b.iter(|| simd_single_pass_par::desviacion_estandar(black_box(&datos)))
+    });
+    c.bench_function("modified_welford_chan_simd", |b| {
+        b.iter(|| modified_welford_chan_simd::desviacion_estandar(black_box(&datos)))
+    });
+    c.bench_function("modified_welford_chan_simd_par", |b| {
+        b.iter(|| modified_welford_chan_simd_par::desviacion_estandar(black_box(&datos)))
     });
     c.bench_function("simd_double_pass_2", |b| {
         b.iter(|| simd_double_pass_2::desviacion_estandar(black_box(&datos)))
