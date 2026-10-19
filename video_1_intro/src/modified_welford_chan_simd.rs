@@ -1,4 +1,4 @@
-use std::simd::Simd;
+use std::simd::{Simd, StdFloat};
 
 const LANES: usize = 8;
 const VECTORES_POR_MICRO_BLOQUE: usize = 128;
@@ -48,18 +48,23 @@ fn welford_bloque(bloque: &[f64]) -> Estado {
     let mut s_run = Simd::<f64, LANES>::splat(0.0);
 
     for grupo in vectores.chunks(VECTORES_POR_MICRO_BLOQUE) {
+        // Desplazamos por el primer vector del grupo: cada carril usa como
+        // referencia su propio dato real, lo que evita la cancelación
+        // catastrófica al acumular los cuadrados.
+        let referencia = grupo[0];
         let mut suma_vec = Simd::<f64, LANES>::splat(0.0);
         let mut suma_cuadrados_vec = Simd::<f64, LANES>::splat(0.0);
 
         for &vector in grupo {
-            suma_vec += vector;
-            suma_cuadrados_vec += vector * vector;
+            let d = vector - referencia;
+            suma_vec += d;
+            suma_cuadrados_vec = d.mul_add(d, suma_cuadrados_vec);
         }
 
         let k = grupo.len() as f64;
-        let inv_k = 1.0 / k;
-        let media_bloque = suma_vec * Simd::splat(inv_k);
-        let s_bloque = suma_cuadrados_vec - suma_vec * media_bloque;
+        let media_d = suma_vec * Simd::splat(1.0 / k);
+        let s_bloque = suma_cuadrados_vec - suma_vec * media_d;
+        let media_bloque = referencia + media_d;
 
         if n_run == 0.0 {
             media_run = media_bloque;

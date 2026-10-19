@@ -3,7 +3,7 @@ use std::{hint::black_box, time::Duration};
 use ultra_paralelismo::{
     secuencial, secuencial_single_pass, welford, welford_simd, simd_single_pass, simd_single_pass_par,
     modified_welford_chan_simd, modified_welford_chan_simd_par, simd_double_pass_2, simd_double_pass_4, simd_double_pass_8,
-    simd_double_pass_8_par,
+    simd_double_pass_8_par, simd_desplazado, simd_dos_pasadas_bloque,
 };
 
 fn configure_criterion() -> Criterion {
@@ -52,6 +52,18 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("simd_double_pass_8_par", |b| {
         b.iter(|| simd_double_pass_8_par::desviacion_estandar_8_par(black_box(&datos)))
+    });
+    c.bench_function("simd_desplazado", |b| {
+        b.iter(|| simd_desplazado::desviacion_estandar(black_box(&datos)))
+    });
+    c.bench_function("simd_desplazado_par", |b| {
+        b.iter(|| simd_desplazado::desviacion_estandar_par(black_box(&datos)))
+    });
+    c.bench_function("simd_dos_pasadas_bloque", |b| {
+        b.iter(|| simd_dos_pasadas_bloque::desviacion_estandar(black_box(&datos)))
+    });
+    c.bench_function("simd_dos_pasadas_bloque_par", |b| {
+        b.iter(|| simd_dos_pasadas_bloque::desviacion_estandar_par(black_box(&datos)))
     });
 }
 

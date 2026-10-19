@@ -12,6 +12,8 @@ pub mod simd_double_pass_2;
 pub mod simd_double_pass_4;
 pub mod simd_double_pass_8;
 pub mod simd_double_pass_8_par;
+pub mod simd_desplazado;
+pub mod simd_dos_pasadas_bloque;
 
 pub use std::simd;
 
@@ -35,6 +37,10 @@ mod tests {
         ("simd_double_pass_4", simd_double_pass_4::desviacion_estandar),
         ("simd_double_pass_8", simd_double_pass_8::desviacion_estandar),
         ("simd_double_pass_8_par", simd_double_pass_8_par::desviacion_estandar_8_par),
+        ("simd_desplazado", simd_desplazado::desviacion_estandar),
+        ("simd_desplazado_par", simd_desplazado::desviacion_estandar_par),
+        ("simd_dos_pasadas_bloque", simd_dos_pasadas_bloque::desviacion_estandar),
+        ("simd_dos_pasadas_bloque_par", simd_dos_pasadas_bloque::desviacion_estandar_par),
     ];
 
     #[test]
@@ -269,6 +275,19 @@ mod tests {
             (
                 "simd_double_pass_8_par",
                 simd_double_pass_8_par::desviacion_estandar_8_par,
+            ),
+            ("simd_desplazado", simd_desplazado::desviacion_estandar),
+            (
+                "simd_desplazado_par",
+                simd_desplazado::desviacion_estandar_par,
+            ),
+            (
+                "simd_dos_pasadas_bloque",
+                simd_dos_pasadas_bloque::desviacion_estandar,
+            ),
+            (
+                "simd_dos_pasadas_bloque_par",
+                simd_dos_pasadas_bloque::desviacion_estandar_par,
             ),
         ];
         for (nombre, func) in estables {
